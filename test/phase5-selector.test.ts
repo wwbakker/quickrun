@@ -146,14 +146,30 @@ describe("phase 5 selector UI", () => {
     expect(recoveredOutput).toContain("Run tests   bun test");
   });
 
-  test("supports cancellation with Esc and Ctrl-C", () => {
+  test("clears the search query on Ctrl-C", () => {
+    const { selector, cancelCount } = createSelector();
+    selector.handleInput("t");
+    selector.handleInput("e");
+    selector.handleInput("s");
+    selector.handleInput("t");
+
+    expect(stripAnsi(selector.render(120).join("\n"))).not.toContain("Dev server");
+
+    selector.handleInput("\u0003");
+
+    const clearedOutput: string = selector.render(120).map(stripAnsi).join("\n");
+    expect(clearedOutput).toContain("Dev server  bun run dev");
+    expect(cancelCount).toBe(0);
+  });
+
+  test("supports cancellation with Esc and Ctrl-D", () => {
     const escSelector = createSelector();
     escSelector.selector.handleInput("\u001b");
     expect(escSelector.cancelCount).toBe(1);
 
-    const ctrlCSelector = createSelector();
-    ctrlCSelector.selector.handleInput("\u0003");
-    expect(ctrlCSelector.cancelCount).toBe(1);
+    const ctrlDSelector = createSelector();
+    ctrlDSelector.selector.handleInput("\u0004");
+    expect(ctrlDSelector.cancelCount).toBe(1);
   });
 
   test("renders a directory-level empty state when no commands are visible", () => {

@@ -128,9 +128,24 @@ export class QuickrunSelector implements Component {
     this.requestRender();
   }
 
+  private clearQuery(): void {
+    if (this.query.length === 0) {
+      return;
+    }
+
+    this.query = "";
+    this.updateFilteredCommands();
+    this.requestRender();
+  }
+
   public handleInput(data: string): void {
-    if (matchesKey(data, Key.escape) || matchesKey(data, Key.ctrl("c"))) {
+    if (matchesKey(data, Key.escape) || matchesKey(data, Key.ctrl("d"))) {
       this.onCancel();
+      return;
+    }
+
+    if (matchesKey(data, Key.ctrl("c"))) {
+      this.clearQuery();
       return;
     }
 

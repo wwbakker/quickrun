@@ -89,6 +89,10 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
         tuiInternals.maxLinesRendered = 0;
         tui.stop();
 
+        if (result !== null) {
+          options.terminal.write(`> ${result}\r\n`);
+        }
+
         void options.terminal
           .drainInput(25, 5)
           .catch(() => undefined)

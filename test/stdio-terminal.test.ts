@@ -77,7 +77,7 @@ describe("stdio terminal", () => {
 
     let lines: string[] = ["123456789012"];
     terminal.setTrackedUiRenderer(() => lines);
-    terminal.write("\x1b[?2026hold render\x1b[?2026l");
+    terminal.write("\x1b[?2026h123456789012\x1b[?2026l");
 
     lines = ["short"];
     (output as unknown as FakeOutputStream).columns = 6;

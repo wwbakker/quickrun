@@ -32,7 +32,8 @@ Current controls:
 - `↑` / `↓` to move the selection
 - `Enter` to emit the selected command
 - `Backspace` to edit the query
-- `Esc` / `Ctrl-C` to cancel
+- `Ctrl-C` to clear the current search query
+- `Esc` / `Ctrl-D` to cancel
 
 Example terminal output:
 

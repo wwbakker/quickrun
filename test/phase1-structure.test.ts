@@ -18,7 +18,7 @@ class ImmediateCancelTerminal implements Terminal {
   public start(onInput: (data: string) => void, _onResize: () => void): void {
     this.inputHandler = onInput;
     queueMicrotask(() => {
-      this.inputHandler?.("\u0003");
+      this.inputHandler?.("\u0004");
     });
   }
 

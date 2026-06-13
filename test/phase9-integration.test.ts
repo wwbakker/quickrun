@@ -92,6 +92,26 @@ describe("phase 9 integration flow", () => {
     await expect(resultPromise).resolves.toBeNull();
   });
 
+  test("clears the search query on Ctrl-C", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    await sendInputAndWait(terminal, "t");
+    await sendInputAndWait(terminal, "e");
+    await sendInputAndWait(terminal, "s");
+    await sendInputAndWait(terminal, "t");
+
+    expect(terminal.getViewport().join("\n")).not.toContain("Dev server");
+
+    await sendInputAndWait(terminal, "\u0003");
+
+    const viewport: string = terminal.getViewport().join("\n");
+    expect(viewport).toContain("Dev server  bun run dev");
+    expect(viewport).toContain("Run tests   bun test");
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
   test("moves selection with arrow keys", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
@@ -101,14 +121,14 @@ describe("phase 9 integration flow", () => {
     await expect(resultPromise).resolves.toBe("bun test");
   });
 
-  test("returns the selected command on Enter and clears the UI", async () => {
+  test("returns the selected command on Enter, clears the UI, and reports the command", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
     terminal.sendInput("\r");
 
     await expect(resultPromise).resolves.toBe("bun run dev");
     await terminal.flush();
-    expect(terminal.getViewport().join("\n").trim()).toBe("");
+    expect(terminal.getViewport().join("\n")).toContain("> bun run dev");
   });
 
   test("returns null on Esc and clears the UI", async () => {
@@ -120,10 +140,10 @@ describe("phase 9 integration flow", () => {
     expect(terminal.getViewport().join("\n").trim()).toBe("");
   });
 
-  test("returns null on Ctrl-C and clears the UI", async () => {
+  test("returns null on Ctrl-D and clears the UI", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
-    terminal.sendInput("\u0003");
+    terminal.sendInput("\u0004");
     await expect(resultPromise).resolves.toBeNull();
     await terminal.flush();
     expect(terminal.getViewport().join("\n").trim()).toBe("");
