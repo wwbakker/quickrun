@@ -5,6 +5,12 @@ import { visibleWidth } from "@earendil-works/pi-tui";
 import { QuickrunSelector } from "../src/selector.ts";
 import type { QuickCommand } from "../src/types.ts";
 
+const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
+
+function stripAnsi(text: string): string {
+  return text.replaceAll(ANSI_PATTERN, "");
+}
+
 const commands: QuickCommand[] = [
   {
     id: "dev",
@@ -69,14 +75,17 @@ function createSelector(overrides?: Partial<{ commands: QuickCommand[] }>): {
 }
 
 describe("phase 5 selector UI", () => {
-  test("renders commands immediately with search instructions", () => {
+  test("renders compact aligned one-line command options", () => {
     const { selector } = createSelector();
-    const output: string = selector.render(120).join("\n");
+    const lines: string[] = selector.render(120);
+    const plainLines: string[] = lines.map(stripAnsi);
 
-    expect(output).toContain("Quickrun");
-    expect(output).toContain("search: ");
-    expect(output).toContain("Dev server");
-    expect(output).toContain("Run tests");
+    expect(plainLines).toEqual(["Dev server  bun run dev", "Run tests   bun test", "Build app   bun run build"]);
+    expect(lines[0]).toContain("\x1b[107m");
+    expect(lines[0]).toContain("\x1b[30mDev server");
+    expect(lines[0]).toContain("\x1b[90mbun run dev");
+    expect(lines[1]).toContain("\x1b[97mRun tests ");
+    expect(lines[1]).toContain("\x1b[90mbun test");
   });
 
   test("filters results as the user types", () => {
@@ -85,10 +94,9 @@ describe("phase 5 selector UI", () => {
     harness.selector.handleInput("e");
     harness.selector.handleInput("v");
 
-    const output: string = harness.selector.render(120).join("\n");
-    expect(output).toContain("search: dev");
-    expect(output).toContain("Dev server");
-    expect(output).not.toContain("Run tests");
+    const plainOutput: string = harness.selector.render(120).map(stripAnsi).join("\n");
+    expect(plainOutput).toContain("Dev server  bun run dev");
+    expect(plainOutput).not.toContain("Run tests");
     expect(harness.renderCount).toBeGreaterThan(0);
   });
 
@@ -96,8 +104,11 @@ describe("phase 5 selector UI", () => {
     const { selector, selectedCommands } = createSelector();
     selector.handleInput("\u001b[B");
 
-    const navigatedOutput: string = selector.render(120).join("\n");
-    expect(navigatedOutput).toContain("> Run tests");
+    const lines: string[] = selector.render(120);
+    const plainOutput: string = lines.map(stripAnsi).join("\n");
+    expect(plainOutput).toContain("Run tests   bun test");
+    expect(lines[1]).toContain("\x1b[107m");
+    expect(lines[0]).not.toContain("\x1b[107m");
 
     selector.handleInput("\r");
     expect(selectedCommands.map((command: QuickCommand) => command.id)).toEqual(["test"]);
@@ -121,14 +132,14 @@ describe("phase 5 selector UI", () => {
     selector.handleInput("z");
     selector.handleInput("z");
 
-    expect(selector.render(120).join("\n")).toContain("No commands match \"zz\".");
+    expect(stripAnsi(selector.render(120).join("\n"))).toContain("No commands match \"zz\".");
 
     selector.handleInput("\u007f");
     selector.handleInput("\u007f");
 
-    const recoveredOutput: string = selector.render(120).join("\n");
-    expect(recoveredOutput).toContain("Dev server");
-    expect(recoveredOutput).toContain("Run tests");
+    const recoveredOutput: string = selector.render(120).map(stripAnsi).join("\n");
+    expect(recoveredOutput).toContain("Dev server  bun run dev");
+    expect(recoveredOutput).toContain("Run tests   bun test");
   });
 
   test("supports cancellation with Esc and Ctrl-C", () => {
@@ -143,7 +154,7 @@ describe("phase 5 selector UI", () => {
 
   test("renders a directory-level empty state when no commands are visible", () => {
     const { selector } = createSelector({ commands: [] });
-    const output: string = selector.render(120).join("\n");
+    const output: string = stripAnsi(selector.render(120).join("\n"));
 
     expect(output).toContain("No commands are configured for this directory.");
   });

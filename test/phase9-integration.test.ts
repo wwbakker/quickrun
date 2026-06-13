@@ -52,13 +52,15 @@ async function sendInputAndWait(terminal: VirtualTerminal, data: string): Promis
 }
 
 describe("phase 9 integration flow", () => {
-  test("renders matching commands immediately for the current cwd", async () => {
+  test("renders compact aligned matching commands immediately for the current cwd", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
     const viewport: string = terminal.getViewport().join("\n");
 
-    expect(viewport).toContain("Dev server");
-    expect(viewport).toContain("Run tests");
+    expect(viewport).toContain("Dev server  bun run dev");
+    expect(viewport).toContain("Run tests   bun test");
     expect(viewport).not.toContain("Deploy work app");
+    expect(viewport).not.toContain("Quickrun");
+    expect(viewport).not.toContain("search:");
 
     terminal.sendInput("\u001b");
     await expect(resultPromise).resolves.toBeNull();
@@ -68,7 +70,7 @@ describe("phase 9 integration flow", () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/work/app");
     const viewport: string = terminal.getViewport().join("\n");
 
-    expect(viewport).toContain("Deploy work app");
+    expect(viewport).toContain("Deploy work app  ./deploy.sh");
     expect(viewport).not.toContain("Dev server");
 
     terminal.sendInput("\u001b");
@@ -83,8 +85,7 @@ describe("phase 9 integration flow", () => {
     await sendInputAndWait(terminal, "v");
 
     const viewport: string = terminal.getViewport().join("\n");
-    expect(viewport).toContain("search: dev");
-    expect(viewport).toContain("Dev server");
+    expect(viewport).toContain("Dev server  bun run dev");
     expect(viewport).not.toContain("Run tests");
 
     terminal.sendInput("\u001b");
@@ -95,21 +96,17 @@ describe("phase 9 integration flow", () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
     await sendInputAndWait(terminal, "\u001b[B");
+    terminal.sendInput("\r");
 
-    const viewport: string = terminal.getViewport().join("\n");
-    expect(viewport).toContain("> Run tests");
-
-    terminal.sendInput("\u001b");
-    await expect(resultPromise).resolves.toBeNull();
+    await expect(resultPromise).resolves.toBe("bun test");
   });
 
   test("returns the selected command on Enter", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
-    await sendInputAndWait(terminal, "\u001b[B");
     terminal.sendInput("\r");
 
-    await expect(resultPromise).resolves.toBe("bun test");
+    await expect(resultPromise).resolves.toBe("bun run dev");
   });
 
   test("returns null on Esc", async () => {
@@ -148,7 +145,6 @@ describe("phase 9 integration flow", () => {
 
     const viewportLines: string[] = terminal.getViewport();
     expect(viewportLines.join("\n")).toContain("Run tests");
-    expect(viewportLines.join("\n")).toContain("> Run tests");
 
     for (const line of viewportLines) {
       expect(visibleWidth(line)).toBeLessThanOrEqual(32);

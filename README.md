@@ -37,15 +37,9 @@ Current controls:
 Example terminal output:
 
 ```text
-Quickrun
-cwd: /Users/you/Repos/personal/my-app
-search: dev
-Showing 1 command.
-
-> Dev server
-  bun run dev
-  Start the app in development mode.
-  tags: frontend, dev
+Dev server  bun run dev
+Run tests   bun test
+Build app   bun run build
 ```
 
 ## Command configuration
@@ -95,10 +89,12 @@ Using an array for `when` lets one command appear in multiple project scopes.
 
 ## Result list format
 
-Each visible command is rendered as:
-- primary line: `title`
-- secondary line: `command`
-- additional context lines: `description` and `tags` when present
+Each visible command is rendered on a single line:
+- aligned title column
+- aligned command column
+- white `title`
+- gray `command`
+- selected row shown with a light background and darker foreground
 
 ## cwd matching rules
 

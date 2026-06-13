@@ -1,7 +1,15 @@
-import { Key, decodeKittyPrintable, matchesKey, truncateToWidth, type Component } from "@earendil-works/pi-tui";
+import { Key, decodeKittyPrintable, matchesKey, truncateToWidth, visibleWidth, type Component } from "@earendil-works/pi-tui";
 
 import { filterCommandsByQuery } from "./search.ts";
 import type { QuickCommand } from "./types.ts";
+
+const ANSI_RESET = "\x1b[0m";
+const ANSI_TITLE = "\x1b[97m";
+const ANSI_COMMAND = "\x1b[90m";
+const ANSI_SELECTED_BACKGROUND = "\x1b[107m";
+const ANSI_SELECTED_TITLE = "\x1b[30m";
+const ANSI_SELECTED_COMMAND = "\x1b[90m";
+const COMMAND_COLUMN_GAP = 2;
 
 export interface QuickrunSelectorOptions {
   cwd: string;
@@ -30,6 +38,28 @@ function getPrintableCharacter(data: string): string | undefined {
   }
 
   return undefined;
+}
+
+function getTitleColumnWidth(commands: readonly QuickCommand[]): number {
+  return commands.reduce((maxWidth: number, command: QuickCommand) => {
+    return Math.max(maxWidth, visibleWidth(command.title));
+  }, 0);
+}
+
+function padTitle(title: string, targetWidth: number): string {
+  const paddingWidth: number = Math.max(0, targetWidth - visibleWidth(title));
+  return `${title}${" ".repeat(paddingWidth)}`;
+}
+
+function formatCommandLine(command: QuickCommand, selected: boolean, titleColumnWidth: number): string {
+  const paddedTitle: string = padTitle(command.title, titleColumnWidth);
+  const gap: string = " ".repeat(COMMAND_COLUMN_GAP);
+
+  if (selected) {
+    return `${ANSI_SELECTED_BACKGROUND}${ANSI_SELECTED_TITLE}${paddedTitle}${gap}${ANSI_SELECTED_COMMAND}${command.command}${ANSI_RESET}`;
+  }
+
+  return `${ANSI_TITLE}${paddedTitle}${ANSI_RESET}${gap}${ANSI_COMMAND}${command.command}${ANSI_RESET}`;
 }
 
 /**
@@ -123,43 +153,18 @@ export class QuickrunSelector implements Component {
   }
 
   public render(width: number): string[] {
-    const lines: string[] = [
-      "Quickrun",
-      `cwd: ${this.cwd}`,
-      `search: ${this.query}`,
-      "Use ↑/↓ to move, Enter to select, Backspace to edit, Esc/Ctrl-C to cancel.",
-      "",
-    ];
-
     if (this.commands.length === 0) {
-      lines.push("No commands are configured for this directory.");
-      return lines.map((line: string) => truncateToWidth(line, width));
+      return [truncateToWidth("No commands are configured for this directory.", width)];
     }
 
     if (this.filteredCommands.length === 0) {
-      lines.push(`No commands match \"${this.query}\".`);
-      return lines.map((line: string) => truncateToWidth(line, width));
+      return [truncateToWidth(`No commands match \"${this.query}\".`, width)];
     }
 
-    lines.push(`Showing ${this.filteredCommands.length} command${this.filteredCommands.length === 1 ? "" : "s"}.`);
-    lines.push("");
+    const titleColumnWidth: number = getTitleColumnWidth(this.filteredCommands);
 
-    for (const [index, command] of this.filteredCommands.entries()) {
-      const prefix: string = index === this.selectedIndex ? ">" : " ";
-      lines.push(`${prefix} ${command.title}`);
-      lines.push(`  ${command.command}`);
-
-      if (command.description !== undefined) {
-        lines.push(`  ${command.description}`);
-      }
-
-      if (command.tags !== undefined && command.tags.length > 0) {
-        lines.push(`  tags: ${command.tags.join(", ")}`);
-      }
-
-      lines.push("");
-    }
-
-    return lines.map((line: string) => truncateToWidth(line, width));
+    return this.filteredCommands.map((command: QuickCommand, index: number) => {
+      return truncateToWidth(formatCommandLine(command, index === this.selectedIndex, titleColumnWidth), width);
+    });
   }
 }
