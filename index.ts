@@ -1,1 +1,4 @@
-console.log("Hello via Bun!");
+import { main } from "./src/cli.ts";
+
+const exitCode: number = await main();
+process.exit(exitCode);
