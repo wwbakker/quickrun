@@ -12,8 +12,17 @@ export interface QuickrunConfig {
 }
 
 /**
- * Small helper to keep the config API ergonomic while preserving strong typing.
+ * Small helper to keep per-command configuration ergonomic while preserving strong typing.
  */
 export function defineCommands(commands: readonly QuickCommand[]): QuickCommand[] {
   return [...commands];
+}
+
+/**
+ * Helper for defining the global quickrun config as plain TypeScript.
+ */
+export function defineQuickrunConfig(config: QuickrunConfig): QuickrunConfig {
+  return {
+    commands: [...config.commands],
+  };
 }

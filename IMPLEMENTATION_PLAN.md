@@ -52,17 +52,17 @@ Build a fast terminal utility that:
 
 ## Phase 2: Command model and config API
 
-- [ ] Define the `QuickCommand` interface
-- [ ] Support required fields:
-  - [ ] `id`
-  - [ ] `title`
-  - [ ] `command`
-  - [ ] `when` (`string | string[]` glob patterns)
-- [ ] Support optional fields:
-  - [ ] `description`
-  - [ ] `tags`
-- [ ] Add a small example command registry for development/testing
-- [ ] Document how users should add/edit commands
+- [x] Define the `QuickCommand` interface
+- [x] Support required fields:
+  - [x] `id`
+  - [x] `title`
+  - [x] `command`
+  - [x] `when` (`string | string[]` glob patterns)
+- [x] Support optional fields:
+  - [x] `description`
+  - [x] `tags`
+- [x] Add a small example command registry for development/testing
+- [x] Document how users should add/edit commands
 
 ### Suggested initial shape
 
@@ -79,90 +79,90 @@ export type QuickCommand = {
 
 ### Acceptance criteria
 
-- [ ] Commands can be defined in plain TypeScript without extra tooling
-- [ ] The config supports multiple cwd globs per command
-- [ ] Example commands cover at least 2 different project patterns
+- [x] Commands can be defined in plain TypeScript without extra tooling
+- [x] The config supports multiple cwd globs per command
+- [x] Example commands cover at least 2 different project patterns
 
 ---
 
 ## Phase 3: cwd matching
 
-- [ ] Choose a glob library or implementation strategy compatible with Bun
-- [ ] Normalize cwd values before matching
-- [ ] Normalize `~`/home-directory patterns if supported in config
-- [ ] Implement command visibility filtering for the current cwd
-- [ ] Decide whether matching is "any glob matches" for `when[]`
-- [ ] Add unit tests for matching behavior
+- [x] Choose a glob library or implementation strategy compatible with Bun
+- [x] Normalize cwd values before matching
+- [x] Normalize `~`/home-directory patterns if supported in config
+- [x] Implement command visibility filtering for the current cwd
+- [x] Decide whether matching is "any glob matches" for `when[]`
+- [x] Add unit tests for matching behavior
 
 ### Matching rules for v1
 
-- [ ] A command is visible if **any** `when` glob matches the current cwd
-- [ ] Matching is deterministic and case handling is documented
-- [ ] Path normalization behavior is documented
+- [x] A command is visible if **any** `when` glob matches the current cwd
+- [x] Matching is deterministic and case handling is documented
+- [x] Path normalization behavior is documented
 
 ### Acceptance criteria
 
-- [ ] Matching works for exact project paths
-- [ ] Matching works for nested directories inside a project
-- [ ] Non-matching commands are excluded before rendering
+- [x] Matching works for exact project paths
+- [x] Matching works for nested directories inside a project
+- [x] Non-matching commands are excluded before rendering
 
 ---
 
 ## Phase 4: Search and ranking
 
-- [ ] Implement case-insensitive search
-- [ ] Search across:
-  - [ ] `title`
-  - [ ] `command`
-  - [ ] `description`
-  - [ ] `tags`
-- [ ] Add lightweight ranking so better matches appear first
-- [ ] Define empty-query behavior
-- [ ] Define no-results behavior
-- [ ] Add unit tests for ranking/filtering
+- [x] Implement case-insensitive search
+- [x] Search across:
+  - [x] `title`
+  - [x] `command`
+  - [x] `description`
+  - [x] `tags`
+- [x] Add lightweight ranking so better matches appear first
+- [x] Define empty-query behavior
+- [x] Define no-results behavior
+- [x] Add unit tests for ranking/filtering
 
 ### Suggested v1 behavior
 
-- [ ] Empty query shows all cwd-matching commands
-- [ ] Exact or prefix matches in `title` rank above loose matches
-- [ ] Commands with matching tags/descriptions still appear, but below title hits
+- [x] Empty query shows all cwd-matching commands
+- [x] Exact or prefix matches in `title` rank above loose matches
+- [x] Commands with matching tags/descriptions still appear, but below title hits
 
 ### Acceptance criteria
 
-- [ ] Typing immediately narrows the result list
-- [ ] Results remain stable and predictable
-- [ ] No-results state is clearly rendered
+- [x] Typing immediately narrows the result list
+- [x] Results remain stable and predictable
+- [x] No-results state is clearly rendered
 
 ---
 
 ## Phase 5: TUI selector UI
 
-- [ ] Build a selector component using `@earendil-works/pi-tui`
-- [ ] Render a search input and result list together
-- [ ] Show matching commands immediately on startup
-- [ ] Support keyboard navigation:
-  - [ ] `Up`
-  - [ ] `Down`
+- [x] Build a selector component using `@earendil-works/pi-tui`
+- [x] Render a search input and result list together
+- [x] Show matching commands immediately on startup
+- [x] Support keyboard navigation:
+  - [x] `Up`
+  - [x] `Down`
   - [ ] optional `j` / `k`
-- [ ] Support selection on `Enter`
-- [ ] Support cancellation on `Esc`
-- [ ] Support cancellation on `Ctrl-C`
-- [ ] Preserve selection bounds when the filtered list changes
-- [ ] Render useful per-item text without overflowing terminal width
-- [ ] Decide the visible row format for each command
+- [x] Support selection on `Enter`
+- [x] Support cancellation on `Esc`
+- [x] Support cancellation on `Ctrl-C`
+- [x] Preserve selection bounds when the filtered list changes
+- [x] Render useful per-item text without overflowing terminal width
+- [x] Decide the visible row format for each command
 
 ### Candidate row format
 
-- [ ] Primary line: `title`
-- [ ] Secondary line: `command`
-- [ ] Optional tertiary context: `description` or tags if space allows
+- [x] Primary line: `title`
+- [x] Secondary line: `command`
+- [x] Optional tertiary context: `description` or tags if space allows
 
 ### Acceptance criteria
 
-- [ ] UI is usable immediately after startup
-- [ ] Navigation feels responsive
-- [ ] The selected row is visually obvious
-- [ ] The component behaves correctly in narrow terminals
+- [x] UI is usable immediately after startup
+- [x] Navigation feels responsive
+- [x] The selected row is visually obvious
+- [x] The component behaves correctly in narrow terminals
 
 ---
 

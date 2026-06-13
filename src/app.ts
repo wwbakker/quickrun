@@ -1,5 +1,6 @@
 import { TUI, type Terminal } from "@earendil-works/pi-tui";
 
+import { filterCommandsForCwd } from "./match.ts";
 import { QuickrunSelector } from "./selector.ts";
 import type { QuickCommand } from "./types.ts";
 
@@ -13,6 +14,7 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
   return await new Promise<string | null>((resolve, reject) => {
     try {
       const tui: TUI = new TUI(options.terminal);
+      const visibleCommands: QuickCommand[] = filterCommandsForCwd(options.commands, options.cwd);
       let settled: boolean = false;
 
       const finish = (result: string | null): void => {
@@ -33,12 +35,15 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
 
       const selector: QuickrunSelector = new QuickrunSelector({
         cwd: options.cwd,
-        commands: options.commands,
+        commands: visibleCommands,
         onSelect: (command: QuickCommand) => {
           finish(command.command);
         },
         onCancel: () => {
           finish(null);
+        },
+        requestRender: () => {
+          tui.requestRender();
         },
       });
 
