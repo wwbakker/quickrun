@@ -9,10 +9,19 @@ interface TuiInternals {
   maxLinesRendered: number;
 }
 
+interface InlineUiTerminal {
+  setTrackedUiRenderer(renderer: () => string[]): void;
+  clearTrackedUiRegion(): void;
+}
+
 export interface RunSelectorOptions {
   terminal: Terminal;
   cwd: string;
   commands: QuickCommand[];
+}
+
+function isInlineUiTerminal(terminal: Terminal): terminal is Terminal & InlineUiTerminal {
+  return "setTrackedUiRenderer" in terminal && "clearTrackedUiRegion" in terminal;
 }
 
 function clearRenderedUi(terminal: Terminal, lineCount: number): void {
@@ -64,13 +73,18 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
 
         settled = true;
 
-        const lineCount: number = Math.max(
-          selector.render(options.terminal.columns).length,
-          tuiInternals.maxLinesRendered,
-          tuiInternals.previousLines.length,
-        );
+        if (isInlineUiTerminal(options.terminal)) {
+          options.terminal.clearTrackedUiRegion();
+        } else {
+          const lineCount: number = Math.max(
+            selector.render(options.terminal.columns).length,
+            tuiInternals.maxLinesRendered,
+            tuiInternals.previousLines.length,
+          );
 
-        clearRenderedUi(options.terminal, lineCount);
+          clearRenderedUi(options.terminal, lineCount);
+        }
+
         tuiInternals.previousLines = [];
         tuiInternals.maxLinesRendered = 0;
         tui.stop();
@@ -82,6 +96,10 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
             resolve(result);
           });
       };
+
+      if (isInlineUiTerminal(options.terminal)) {
+        options.terminal.setTrackedUiRenderer(() => selector.render(options.terminal.columns));
+      }
 
       tui.addChild(selector);
       tui.setFocus(selector);

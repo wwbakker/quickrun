@@ -45,15 +45,46 @@ describe("stdio terminal", () => {
     const output = new FakeOutputStream() as unknown as NodeJS.WriteStream;
     const terminal = new StdioTerminal(input, output);
 
-    terminal.write("first\r\nsecond\r\nthird");
-    terminal.write("\x1b[1A\rupdated second");
+    terminal.setTrackedUiRenderer(() => ["first", "second", "third"]);
     terminal.write("\x1b[?2026h\x1b[2J\x1b[H\x1b[3Jnarrow\r\nview\x1b[?2026l");
 
     const written = (output as unknown as FakeOutputStream).writes.join("");
     expect(written).not.toContain("\x1b[2J\x1b[H");
     expect(written).not.toContain("\x1b[3J");
-    expect(written).toContain("\x1b[1A");
     expect(written).toContain("\r\x1b[2K");
     expect(written).toContain("narrow\r\nview");
+  });
+
+  test("clears wrapped rows after a width shrink", () => {
+    const input = new FakeInputStream() as unknown as NodeJS.ReadStream;
+    const output = new FakeOutputStream() as unknown as NodeJS.WriteStream;
+    const terminal = new StdioTerminal(input, output);
+
+    terminal.setTrackedUiRenderer(() => ["123456789012", "abcdef"]);
+    (output as unknown as FakeOutputStream).columns = 6;
+    terminal.clearTrackedUiRegion();
+
+    const written = (output as unknown as FakeOutputStream).writes.join("");
+    const clearCount = written.split("\r\x1b[2K").length - 1;
+    expect(clearCount).toBe(3);
+    expect(written).toContain("\x1b[2A");
+  });
+
+  test("clears based on the last rendered UI, not the next renderer output", () => {
+    const input = new FakeInputStream() as unknown as NodeJS.ReadStream;
+    const output = new FakeOutputStream() as unknown as NodeJS.WriteStream;
+    const terminal = new StdioTerminal(input, output);
+
+    let lines: string[] = ["123456789012"];
+    terminal.setTrackedUiRenderer(() => lines);
+    terminal.write("\x1b[?2026hold render\x1b[?2026l");
+
+    lines = ["short"];
+    (output as unknown as FakeOutputStream).columns = 6;
+    terminal.clearTrackedUiRegion();
+
+    const written = (output as unknown as FakeOutputStream).writes.join("");
+    const clearCount = written.split("\r\x1b[2K").length - 1;
+    expect(clearCount).toBe(2);
   });
 });
