@@ -13,28 +13,22 @@ function stripAnsi(text: string): string {
 
 const commands: QuickCommand[] = [
   {
-    id: "dev",
     title: "Dev server",
     command: "bun run dev",
     when: "**",
-    description: "Start the app in development mode.",
-    tags: ["frontend", "dev"],
+    tags: ["frontend", "local"],
   },
   {
-    id: "test",
     title: "Run tests",
     command: "bun test",
     when: "**",
-    description: "Execute the test suite.",
-    tags: ["qa", "test"],
+    tags: ["qa", "checks"],
   },
   {
-    id: "build",
     title: "Build app",
     command: "bun run build",
     when: "**",
-    description: "Create a production build.",
-    tags: ["build", "release"],
+    tags: ["release", "deploy"],
   },
 ];
 
@@ -115,7 +109,7 @@ describe("phase 5 selector UI", () => {
     expect(visibleWidth(lines[1] ?? "")).toBe(120);
 
     selector.handleInput("\r");
-    expect(selectedCommands.map((command: QuickCommand) => command.id)).toEqual(["test"]);
+    expect(selectedCommands.map((command: QuickCommand) => command.title)).toEqual(["Run tests"]);
   });
 
   test("clamps the selected row when filtering shrinks the result set", () => {
@@ -128,7 +122,7 @@ describe("phase 5 selector UI", () => {
     selector.handleInput("t");
     selector.handleInput("\r");
 
-    expect(selectedCommands.map((command: QuickCommand) => command.id)).toEqual(["test"]);
+    expect(selectedCommands.map((command: QuickCommand) => command.title)).toEqual(["Run tests"]);
   });
 
   test("shows a no-results state and lets Backspace recover", () => {
@@ -147,19 +141,19 @@ describe("phase 5 selector UI", () => {
   });
 
   test("clears the search query on Ctrl-C", () => {
-    const { selector, cancelCount } = createSelector();
-    selector.handleInput("t");
-    selector.handleInput("e");
-    selector.handleInput("s");
-    selector.handleInput("t");
+    const harness = createSelector();
+    harness.selector.handleInput("t");
+    harness.selector.handleInput("e");
+    harness.selector.handleInput("s");
+    harness.selector.handleInput("t");
 
-    expect(stripAnsi(selector.render(120).join("\n"))).not.toContain("Dev server");
+    expect(stripAnsi(harness.selector.render(120).join("\n"))).not.toContain("Dev server");
 
-    selector.handleInput("\u0003");
+    harness.selector.handleInput("\u0003");
 
-    const clearedOutput: string = selector.render(120).map(stripAnsi).join("\n");
+    const clearedOutput: string = harness.selector.render(120).map(stripAnsi).join("\n");
     expect(clearedOutput).toContain("Dev server  bun run dev");
-    expect(cancelCount).toBe(0);
+    expect(harness.cancelCount).toBe(0);
   });
 
   test("supports cancellation with Esc and Ctrl-D", () => {

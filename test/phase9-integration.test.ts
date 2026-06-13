@@ -7,28 +7,22 @@ import { VirtualTerminal } from "./virtual-terminal.ts";
 
 const commands: QuickCommand[] = [
   {
-    id: "dev",
     title: "Dev server",
     command: "bun run dev",
     when: ["/Users/tester/Repos/personal/quickrun-ts", "/Users/tester/Repos/personal/quickrun-ts/**"],
-    description: "Start the app in development mode.",
-    tags: ["frontend", "dev"],
+    tags: ["frontend", "local"],
   },
   {
-    id: "test",
     title: "Run tests",
     command: "bun test",
     when: ["/Users/tester/Repos/personal/quickrun-ts", "/Users/tester/Repos/personal/quickrun-ts/**"],
-    description: "Execute the test suite.",
-    tags: ["qa", "test"],
+    tags: ["qa", "checks"],
   },
   {
-    id: "deploy",
     title: "Deploy work app",
     command: "./deploy.sh",
     when: ["/Users/tester/Repos/work/app", "/Users/tester/Repos/work/app/**"],
-    description: "Deploy the work application.",
-    tags: ["work", "deploy"],
+    tags: ["release", "deploy"],
   },
 ];
 
@@ -128,7 +122,7 @@ describe("phase 9 integration flow", () => {
 
     await expect(resultPromise).resolves.toBe("bun run dev");
     await terminal.flush();
-    expect(terminal.getViewport().join("\n")).toContain("> bun run dev");
+    expect(terminal.getViewport().join("\n")).toContain("ran bun run dev");
   });
 
   test("returns null on Esc and clears the UI", async () => {

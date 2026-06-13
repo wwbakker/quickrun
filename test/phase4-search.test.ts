@@ -5,31 +5,24 @@ import type { QuickCommand } from "../src/types.ts";
 
 const commands: QuickCommand[] = [
   {
-    id: "dev-title",
     title: "Dev server",
     command: "bun run dev",
     when: "**",
-    description: "Start the local development server.",
-    tags: ["frontend", "dev"],
+    tags: ["frontend", "local"],
   },
   {
-    id: "command-hit",
     title: "Start app",
     command: "bun run dev:api",
     when: "**",
-    description: "Run the API server.",
     tags: ["backend"],
   },
   {
-    id: "description-hit",
     title: "Run tests",
     command: "bun test",
     when: "**",
-    description: "Useful during development iterations.",
-    tags: ["qa"],
+    tags: ["qa", "checks"],
   },
   {
-    id: "tag-hit",
     title: "Build release",
     command: "bun run build",
     when: "**",
@@ -43,30 +36,34 @@ describe("phase 4 search and ranking", () => {
   });
 
   test("returns all commands for an empty query in original order", () => {
-    expect(filterCommandsByQuery(commands, "").map((command: QuickCommand) => command.id)).toEqual([
-      "dev-title",
-      "command-hit",
-      "description-hit",
-      "tag-hit",
+    expect(filterCommandsByQuery(commands, "").map((command: QuickCommand) => command.title)).toEqual([
+      "Dev server",
+      "Start app",
+      "Run tests",
+      "Build release",
     ]);
   });
 
-  test("searches across title, command, description, and tags", () => {
-    expect(filterCommandsByQuery(commands, "dev").map((command: QuickCommand) => command.id)).toEqual([
-      "dev-title",
-      "command-hit",
-      "description-hit",
+  test("searches across title, command, and tags", () => {
+    expect(filterCommandsByQuery(commands, "dev").map((command: QuickCommand) => command.title)).toEqual([
+      "Dev server",
+      "Start app",
     ]);
 
-    expect(filterCommandsByQuery(commands, "production").map((command: QuickCommand) => command.id)).toEqual(["tag-hit"]);
+    expect(filterCommandsByQuery(commands, "production").map((command: QuickCommand) => command.title)).toEqual([
+      "Build release",
+    ]);
+
+    expect(filterCommandsByQuery(commands, "checks").map((command: QuickCommand) => command.title)).toEqual([
+      "Run tests",
+    ]);
   });
 
-  test("ranks stronger title matches above command, tag, and description matches", () => {
-    const rankedCommands: string[] = filterCommandsByQuery(commands, "dev").map((command: QuickCommand) => command.id);
-    expect(rankedCommands).toEqual(["dev-title", "command-hit", "description-hit"]);
+  test("ranks stronger title matches above command and tag matches", () => {
+    const rankedCommands: string[] = filterCommandsByQuery(commands, "dev").map((command: QuickCommand) => command.title);
+    expect(rankedCommands).toEqual(["Dev server", "Start app"]);
 
     expect(scoreCommandForQuery(commands[0]!, "dev")).toBeGreaterThan(scoreCommandForQuery(commands[1]!, "dev") ?? 0);
-    expect(scoreCommandForQuery(commands[1]!, "dev")).toBeGreaterThan(scoreCommandForQuery(commands[2]!, "dev") ?? 0);
   });
 
   test("returns no results when nothing matches", () => {

@@ -20,9 +20,7 @@ function fieldHasWordPrefix(field: string, query: string): boolean {
 }
 
 function buildSearchHaystack(command: QuickCommand): string {
-  return [command.title, command.command, command.description ?? "", ...(command.tags ?? [])]
-    .join(" ")
-    .toLocaleLowerCase();
+  return [command.title, command.command, ...(command.tags ?? [])].join(" ").toLocaleLowerCase();
 }
 
 /**
@@ -76,15 +74,11 @@ export function scoreCommandForQuery(command: QuickCommand, query: string): numb
     }
   }
 
-  if (command.description !== undefined && fieldIncludes(command.description, normalizedQuery)) {
-    score = Math.max(score, 400);
-  }
-
   return score;
 }
 
 /**
- * Phase 4 keeps search intentionally small and predictable so UI work can build on it.
+ * Search stays intentionally small and predictable so the terminal UI remains easy to reason about.
  */
 export function filterCommandsByQuery(commands: readonly QuickCommand[], query: string): QuickCommand[] {
   const normalizedQuery: string = normalizeSearchQuery(query);

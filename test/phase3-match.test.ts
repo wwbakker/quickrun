@@ -32,7 +32,6 @@ describe("phase 3 cwd matching", () => {
 
   test("uses any-glob semantics for command visibility", () => {
     const command: QuickCommand = {
-      id: "multi-scope",
       title: "Run scoped command",
       command: "bun test",
       when: ["/Users/tester/Repos/work/**", "/Users/tester/Repos/personal/quickrun-ts/**"],
@@ -45,13 +44,11 @@ describe("phase 3 cwd matching", () => {
   test("filters out commands that do not match the cwd", () => {
     const commands: QuickCommand[] = [
       {
-        id: "personal",
         title: "Personal command",
         command: "bun test",
         when: "/Users/tester/Repos/personal/**",
       },
       {
-        id: "work",
         title: "Work command",
         command: "bun run dev",
         when: "/Users/tester/Repos/work/**",
@@ -59,19 +56,17 @@ describe("phase 3 cwd matching", () => {
     ];
 
     const visibleCommands: QuickCommand[] = filterCommandsForCwd(commands, "/Users/tester/Repos/personal/quickrun-ts");
-    expect(visibleCommands.map((command: QuickCommand) => command.id)).toEqual(["personal"]);
+    expect(visibleCommands.map((command: QuickCommand) => command.title)).toEqual(["Personal command"]);
   });
 
   test("returns patterns consistently from single or multiple when values", () => {
     const singlePatternCommand: QuickCommand = {
-      id: "single",
       title: "Single",
       command: "echo single",
       when: "/Users/tester/project",
     };
 
     const multiPatternCommand: QuickCommand = {
-      id: "multi",
       title: "Multi",
       command: "echo multi",
       when: ["/Users/tester/project", "/Users/tester/project/**"],

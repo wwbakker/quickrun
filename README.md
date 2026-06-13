@@ -58,23 +58,19 @@ For personal customization, put your real machine-specific commands in `src/comm
 
 ```ts
 export interface QuickCommand {
-  id: string;
   title: string;
   command: string;
   when: string | string[];
-  description?: string;
   tags?: string[];
 }
 ```
 
 ### Field meanings
 
-- `id`: stable identifier for the command entry
 - `title`: primary label shown in the selector
 - `command`: shell command emitted when the entry is selected
 - `when`: one or more cwd glob patterns that control visibility
-- `description`: optional secondary searchable text
-- `tags`: optional extra search hints
+- `tags`: optional extra search keywords that are not already obvious from the title or command
 
 ### Example local file
 
@@ -86,12 +82,10 @@ import { defineCommands, defineQuickrunConfig, type QuickrunConfig } from "./typ
 export const quickrunLocalConfig: QuickrunConfig = defineQuickrunConfig({
   commands: defineCommands([
     {
-      id: "frontend-dev",
       title: "Start frontend dev server",
       command: "bun run dev",
       when: ["~/Repos/personal/my-app", "~/Repos/personal/my-app/**"],
-      description: "Run the app's local development server.",
-      tags: ["frontend", "dev", "bun"],
+      tags: ["frontend", "vite", "local"],
     },
   ]),
 });

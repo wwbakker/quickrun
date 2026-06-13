@@ -14,11 +14,9 @@ describe("phase 2 command config", () => {
     const command = commands[0];
 
     expect(command).toBeDefined();
-    expect(command?.id).toBeString();
     expect(command?.title).toBeString();
     expect(command?.command).toBeString();
     expect(command?.when).toBeDefined();
-    expect(command?.description).toBeString();
     expect(command?.tags).toBeArray();
   });
 

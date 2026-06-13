@@ -9,28 +9,22 @@ import { defineCommands, defineQuickrunConfig, type QuickrunConfig } from "./typ
 export const quickrunExampleConfig: QuickrunConfig = defineQuickrunConfig({
   commands: defineCommands([
     {
-      id: "example-dev",
       title: "Start app dev server",
       command: "bun run dev",
       when: ["~/projects/example-app", "~/projects/example-app/**"],
-      description: "Run the local development server for the example app.",
-      tags: ["bun", "dev", "example"],
+      tags: ["frontend", "local"],
     },
     {
-      id: "example-test",
       title: "Run app tests",
       command: "bun test",
       when: ["~/projects/example-app", "~/projects/example-app/**"],
-      description: "Execute the example app test suite.",
-      tags: ["bun", "test", "example"],
+      tags: ["qa"],
     },
     {
-      id: "example-typecheck",
       title: "Type-check TypeScript",
       command: "tsc --noEmit",
       when: ["~/projects/**", "~/workspaces/**"],
-      description: "Run a TypeScript type-check in repositories that use TS tooling.",
-      tags: ["typescript", "check"],
+      tags: ["ts", "types"],
     },
   ]),
 });

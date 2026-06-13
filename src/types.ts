@@ -1,9 +1,7 @@
 export interface QuickCommand {
-  id: string;
   title: string;
   command: string;
   when: string | string[];
-  description?: string;
   tags?: string[];
 }
 

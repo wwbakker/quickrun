@@ -90,7 +90,7 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
         tui.stop();
 
         if (result !== null) {
-          options.terminal.write(`> ${result}\r\n`);
+          options.terminal.write(`ran ${result}\r\n`);
         }
 
         void options.terminal

@@ -44,7 +44,6 @@ class MemoryStream implements WritableTextStream {
 
 const commands: QuickCommand[] = [
   {
-    id: "test",
     title: "Run tests",
     command: "bun test",
     when: "**",

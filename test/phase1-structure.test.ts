@@ -64,7 +64,6 @@ class ImmediateCancelTerminal implements Terminal {
 describe("phase 1 scaffold", () => {
   test("exports a typed example command registry", () => {
     expect(commands.length).toBeGreaterThan(0);
-    expect(commands[0]?.id).toBeString();
     expect(commands[0]?.title).toBeString();
     expect(commands[0]?.command).toBeString();
   });
