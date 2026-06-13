@@ -80,12 +80,15 @@ describe("phase 5 selector UI", () => {
     const lines: string[] = selector.render(120);
     const plainLines: string[] = lines.map(stripAnsi);
 
-    expect(plainLines).toEqual(["Dev server  bun run dev", "Run tests   bun test", "Build app   bun run build"]);
-    expect(lines[0]).toContain("\x1b[107m");
-    expect(lines[0]).toContain("\x1b[30mDev server");
-    expect(lines[0]).toContain("\x1b[90mbun run dev");
-    expect(lines[1]).toContain("\x1b[97mRun tests ");
-    expect(lines[1]).toContain("\x1b[90mbun test");
+    expect((plainLines[0] ?? "").startsWith("Dev server  bun run dev")).toBeTrue();
+    expect(plainLines[1] ?? "").toBe("Run tests   bun test");
+    expect(plainLines[2] ?? "").toBe("Build app   bun run build");
+    expect(lines[0] ?? "").toContain("\x1b[107m");
+    expect(lines[0] ?? "").toContain("\x1b[30mDev server");
+    expect(lines[0] ?? "").toContain("\x1b[90mbun run dev");
+    expect(lines[1] ?? "").toContain("\x1b[97mRun tests ");
+    expect(lines[1] ?? "").toContain("\x1b[90mbun test");
+    expect(visibleWidth(lines[0] ?? "")).toBe(120);
   });
 
   test("filters results as the user types", () => {
@@ -107,8 +110,9 @@ describe("phase 5 selector UI", () => {
     const lines: string[] = selector.render(120);
     const plainOutput: string = lines.map(stripAnsi).join("\n");
     expect(plainOutput).toContain("Run tests   bun test");
-    expect(lines[1]).toContain("\x1b[107m");
-    expect(lines[0]).not.toContain("\x1b[107m");
+    expect((lines[1] ?? "")).toContain("\x1b[107m");
+    expect((lines[0] ?? "")).not.toContain("\x1b[107m");
+    expect(visibleWidth(lines[1] ?? "")).toBe(120);
 
     selector.handleInput("\r");
     expect(selectedCommands.map((command: QuickCommand) => command.id)).toEqual(["test"]);

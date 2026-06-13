@@ -101,26 +101,32 @@ describe("phase 9 integration flow", () => {
     await expect(resultPromise).resolves.toBe("bun test");
   });
 
-  test("returns the selected command on Enter", async () => {
+  test("returns the selected command on Enter and clears the UI", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
     terminal.sendInput("\r");
 
     await expect(resultPromise).resolves.toBe("bun run dev");
+    await terminal.flush();
+    expect(terminal.getViewport().join("\n").trim()).toBe("");
   });
 
-  test("returns null on Esc", async () => {
+  test("returns null on Esc and clears the UI", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
     terminal.sendInput("\u001b");
     await expect(resultPromise).resolves.toBeNull();
+    await terminal.flush();
+    expect(terminal.getViewport().join("\n").trim()).toBe("");
   });
 
-  test("returns null on Ctrl-C", async () => {
+  test("returns null on Ctrl-C and clears the UI", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
     terminal.sendInput("\u0003");
     await expect(resultPromise).resolves.toBeNull();
+    await terminal.flush();
+    expect(terminal.getViewport().join("\n").trim()).toBe("");
   });
 
   test("shows a no-results state when the query matches nothing", async () => {

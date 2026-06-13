@@ -46,17 +46,28 @@ function getTitleColumnWidth(commands: readonly QuickCommand[]): number {
   }, 0);
 }
 
+function getRowWidth(command: QuickCommand, titleColumnWidth: number): number {
+  return titleColumnWidth + COMMAND_COLUMN_GAP + visibleWidth(command.command);
+}
+
 function padTitle(title: string, targetWidth: number): string {
   const paddingWidth: number = Math.max(0, targetWidth - visibleWidth(title));
   return `${title}${" ".repeat(paddingWidth)}`;
 }
 
-function formatCommandLine(command: QuickCommand, selected: boolean, titleColumnWidth: number): string {
+function formatCommandLine(
+  command: QuickCommand,
+  selected: boolean,
+  titleColumnWidth: number,
+  selectedRowWidth: number,
+): string {
   const paddedTitle: string = padTitle(command.title, titleColumnWidth);
   const gap: string = " ".repeat(COMMAND_COLUMN_GAP);
+  const trailingPaddingWidth: number = Math.max(0, selectedRowWidth - getRowWidth(command, titleColumnWidth));
+  const trailingPadding: string = selected ? " ".repeat(trailingPaddingWidth) : "";
 
   if (selected) {
-    return `${ANSI_SELECTED_BACKGROUND}${ANSI_SELECTED_TITLE}${paddedTitle}${gap}${ANSI_SELECTED_COMMAND}${command.command}${ANSI_RESET}`;
+    return `${ANSI_SELECTED_BACKGROUND}${ANSI_SELECTED_TITLE}${paddedTitle}${gap}${ANSI_SELECTED_COMMAND}${command.command}${trailingPadding}${ANSI_RESET}`;
   }
 
   return `${ANSI_TITLE}${paddedTitle}${ANSI_RESET}${gap}${ANSI_COMMAND}${command.command}${ANSI_RESET}`;
@@ -162,9 +173,10 @@ export class QuickrunSelector implements Component {
     }
 
     const titleColumnWidth: number = getTitleColumnWidth(this.filteredCommands);
+    const selectedRowWidth: number = width;
 
     return this.filteredCommands.map((command: QuickCommand, index: number) => {
-      return truncateToWidth(formatCommandLine(command, index === this.selectedIndex, titleColumnWidth), width);
+      return truncateToWidth(formatCommandLine(command, index === this.selectedIndex, titleColumnWidth, selectedRowWidth), width);
     });
   }
 }
