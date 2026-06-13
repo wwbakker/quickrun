@@ -45,11 +45,14 @@ Build app   bun run build
 
 ## Command configuration
 
-For v1, the global command registry lives directly in:
+Quickrun now uses a two-layer config setup:
 
-- `src/commands.ts`
+- `src/commands.example.ts` — checked in example/default commands with generic paths
+- `src/commands.local.ts` — optional local commands file, ignored by Git
 
-Edit that file to add or remove commands.
+`src/commands.ts` loads the checked-in example config and appends any commands from `src/commands.local.ts` when that file exists.
+
+For personal customization, put your real machine-specific commands in `src/commands.local.ts` instead of editing the tracked example file.
 
 ### Command shape
 
@@ -73,18 +76,28 @@ export interface QuickCommand {
 - `description`: optional secondary searchable text
 - `tags`: optional extra search hints
 
-### Example
+### Example local file
+
+Create `src/commands.local.ts` like this:
 
 ```ts
-{
-  id: "frontend-dev",
-  title: "Start frontend dev server",
-  command: "bun run dev",
-  when: ["~/Repos/personal/my-app", "~/Repos/personal/my-app/**"],
-  description: "Run the app's local development server.",
-  tags: ["frontend", "dev", "bun"],
-}
+import { defineCommands, defineQuickrunConfig, type QuickrunConfig } from "./types.ts";
+
+export const quickrunLocalConfig: QuickrunConfig = defineQuickrunConfig({
+  commands: defineCommands([
+    {
+      id: "frontend-dev",
+      title: "Start frontend dev server",
+      command: "bun run dev",
+      when: ["~/Repos/personal/my-app", "~/Repos/personal/my-app/**"],
+      description: "Run the app's local development server.",
+      tags: ["frontend", "dev", "bun"],
+    },
+  ]),
+});
 ```
+
+You can also export `localCommands` directly instead of `quickrunLocalConfig` if you prefer.
 
 Using an array for `when` lets one command appear in multiple project scopes.
 
@@ -149,7 +162,8 @@ The zsh wrapper uses `eval` so the emitted command runs in your current shell co
 - `src/cli.ts` contains the CLI contract and stdout/stderr behavior
 - `src/app.ts` exposes the testable selector runner
 - `src/selector.ts` owns interactive search/navigation rendering
-- `src/commands.ts` contains the built-in global TypeScript config
+- `src/commands.example.ts` contains the checked-in example/default command config
+- `src/commands.ts` loads the example config plus optional local commands
 - `test/virtual-terminal.ts` vendors the upstream virtual terminal harness for integration tests
 
 ## Tests

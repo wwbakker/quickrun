@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import { commands, quickrunConfig } from "../src/commands.ts";
+import { quickrunExampleConfig } from "../src/commands.example.ts";
 
 describe("phase 2 command config", () => {
   test("exposes the example registry through the global config object", () => {
     expect(quickrunConfig.commands).toEqual(commands);
     expect(quickrunConfig.commands.length).toBeGreaterThan(0);
+    expect(quickrunConfig.commands.slice(0, quickrunExampleConfig.commands.length)).toEqual(quickrunExampleConfig.commands);
   });
 
   test("supports required and optional command fields", () => {

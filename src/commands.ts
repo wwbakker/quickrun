@@ -1,46 +1,46 @@
 import { defineCommands, defineQuickrunConfig, type QuickCommand, type QuickrunConfig } from "./types.ts";
+import { quickrunExampleConfig } from "./commands.example.ts";
+
+interface QuickrunLocalModule {
+  localCommands?: QuickCommand[];
+  quickrunLocalConfig?: QuickrunConfig;
+}
+
+function getLocalCommandsFromModule(module: QuickrunLocalModule): QuickCommand[] {
+  if (module.quickrunLocalConfig !== undefined) {
+    return defineCommands(module.quickrunLocalConfig.commands);
+  }
+
+  if (module.localCommands !== undefined) {
+    return defineCommands(module.localCommands);
+  }
+
+  return [];
+}
+
+async function loadLocalCommands(): Promise<QuickCommand[]> {
+  const localCommandsUrl: URL = new URL("./commands.local.ts", import.meta.url);
+  if (!(await Bun.file(localCommandsUrl).exists())) {
+    return [];
+  }
+
+  const localModule: QuickrunLocalModule = (await import(localCommandsUrl.href)) as QuickrunLocalModule;
+  return getLocalCommandsFromModule(localModule);
+}
 
 /**
- * V1 keeps the global command registry in application code as a plain TypeScript module.
- * Edit this file directly to add, remove, or reorganize commands.
+ * Global quickrun config loader.
  *
- * Required fields:
- * - id: stable identifier for the command
- * - title: primary label shown in the selector
- * - command: shell command emitted on Enter
- * - when: one or more cwd glob patterns that control visibility
+ * - `src/commands.example.ts` is checked in and provides the shared example/defaults.
+ * - `src/commands.local.ts` is optional and gitignored for local customization.
  *
- * Optional fields:
- * - description: extra searchable context
- * - tags: additional search terms or lightweight grouping hints
+ * If `src/commands.local.ts` exists, its commands are appended after the example
+ * commands so local entries can extend the default registry without editing tracked files.
  */
+const localCommands: QuickCommand[] = await loadLocalCommands();
+
 export const quickrunConfig: QuickrunConfig = defineQuickrunConfig({
-  commands: defineCommands([
-    {
-      id: "quickrun-dev",
-      title: "Start Bun in watch mode",
-      command: "bun --watch index.ts",
-      when: ["~/Repos/personal/quickrun-ts", "~/Repos/personal/quickrun-ts/**"],
-      description: "Run the local quickrun development entrypoint.",
-      tags: ["bun", "dev", "quickrun"],
-    },
-    {
-      id: "quickrun-test",
-      title: "Run the test suite",
-      command: "bun test",
-      when: ["~/Repos/personal/quickrun-ts", "~/Repos/personal/quickrun-ts/**"],
-      description: "Execute the full Bun test suite for this repository.",
-      tags: ["bun", "test", "quickrun"],
-    },
-    {
-      id: "typescript-check",
-      title: "Type-check TypeScript",
-      command: "tsc --noEmit",
-      when: ["~/Repos/**", "~/work/**"],
-      description: "Run a TypeScript type-check in repositories that use TS tooling.",
-      tags: ["typescript", "check"],
-    },
-  ]),
+  commands: defineCommands([...quickrunExampleConfig.commands, ...localCommands]),
 });
 
 export const commands: QuickCommand[] = quickrunConfig.commands;
