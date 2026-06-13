@@ -168,13 +168,13 @@ export type QuickCommand = {
 
 ## Phase 6: App orchestration and CLI contract
 
-- [ ] Implement `runSelector(...)` or equivalent testable app API
-- [ ] Inject `Terminal`, cwd, and command list into the app
-- [ ] Return the selected command as a string result
-- [ ] Return `null` or equivalent on cancel
-- [ ] Ensure the production CLI prints **only** the selected command to stdout
-- [ ] Send non-result diagnostics to stderr only
-- [ ] Ensure cancel path prints nothing usable by the wrapper
+- [x] Implement `runSelector(...)` or equivalent testable app API
+- [x] Inject `Terminal`, cwd, and command list into the app
+- [x] Return the selected command as a string result
+- [x] Return `null` or equivalent on cancel
+- [x] Ensure the production CLI prints **only** the selected command to stdout
+- [x] Send non-result diagnostics to stderr only
+- [x] Ensure cancel path prints nothing usable by the wrapper
 
 ### Proposed contract
 
@@ -190,20 +190,20 @@ async function runSelector(options: RunSelectorOptions): Promise<string | null>
 
 ### Acceptance criteria
 
-- [ ] App logic is testable without a real terminal
-- [ ] Selection result is machine-capturable from stdout
-- [ ] Cancel behavior is safe for shell wrappers
+- [x] App logic is testable without a real terminal
+- [x] Selection result is machine-capturable from stdout
+- [x] Cancel behavior is safe for shell wrappers
 
 ---
 
 ## Phase 7: zsh integration
 
-- [ ] Add a documented `zsh` wrapper function
-- [ ] Capture the CLI stdout into a shell variable
-- [ ] No-op on cancel or empty output
-- [ ] Execute the selected command in the current shell via `eval`
-- [ ] Document installation steps for `.zshrc`
-- [ ] Document any quoting or safety caveats
+- [x] Add a documented `zsh` wrapper function
+- [x] Capture the CLI stdout into a shell variable
+- [x] No-op on cancel or empty output
+- [x] Execute the selected command in the current shell via `eval`
+- [x] Document installation steps for `.zshrc`
+- [x] Document any quoting or safety caveats
 
 ### Example target workflow
 
@@ -218,117 +218,117 @@ qr() {
 
 ### Acceptance criteria
 
-- [ ] Wrapper works in `zsh`
-- [ ] Selected command runs in the current shell context
-- [ ] Cancel does nothing
+- [x] Wrapper works in `zsh`
+- [x] Selected command runs in the current shell context
+- [x] Cancel does nothing
 
 ---
 
 ## Phase 8: Integration test harness
 
-- [ ] Add `@xterm/headless` as a dev dependency
-- [ ] Create `test/virtual-terminal.ts`
-- [ ] Base it on the upstream `pi` `VirtualTerminal` helper
-- [ ] Adapt imports so it uses the local installed `Terminal` type
-- [ ] Verify the helper supports:
-  - [ ] `sendInput(...)`
-  - [ ] `resize(...)`
-  - [ ] `flush()`
-  - [ ] `waitForRender()`
-  - [ ] `getViewport()`
+- [x] Add `@xterm/headless` as a dev dependency
+- [x] Create `test/virtual-terminal.ts`
+- [x] Base it on the upstream `pi` `VirtualTerminal` helper
+- [x] Adapt imports so it uses the local installed `Terminal` type
+- [x] Verify the helper supports:
+  - [x] `sendInput(...)`
+  - [x] `resize(...)`
+  - [x] `flush()`
+  - [x] `waitForRender()`
+  - [x] `getViewport()`
 
 ### Acceptance criteria
 
-- [ ] Tests can drive the TUI without a real terminal
-- [ ] Rendered output can be inspected reliably
-- [ ] Keyboard input can be simulated deterministically
+- [x] Tests can drive the TUI without a real terminal
+- [x] Rendered output can be inspected reliably
+- [x] Keyboard input can be simulated deterministically
 
 ---
 
 ## Phase 9: Integration tests
 
-- [ ] Add an integration test for initial render
-- [ ] Add an integration test for cwd filtering
-- [ ] Add an integration test for typing into search
-- [ ] Add an integration test for arrow-key navigation
-- [ ] Add an integration test for `Enter` selection
-- [ ] Add an integration test for `Esc` cancel
-- [ ] Add an integration test for `Ctrl-C` cancel
-- [ ] Add an integration test for no-results behavior
-- [ ] Add an integration test for terminal resize behavior
+- [x] Add an integration test for initial render
+- [x] Add an integration test for cwd filtering
+- [x] Add an integration test for typing into search
+- [x] Add an integration test for arrow-key navigation
+- [x] Add an integration test for `Enter` selection
+- [x] Add an integration test for `Esc` cancel
+- [x] Add an integration test for `Ctrl-C` cancel
+- [x] Add an integration test for no-results behavior
+- [x] Add an integration test for terminal resize behavior
 
 ### Specific scenarios to cover
 
-- [ ] Given a cwd, matching commands are visible immediately
-- [ ] Typing `dev` filters the list to dev-like commands
-- [ ] Moving down changes the selected item
-- [ ] Pressing `Enter` resolves the correct command string
-- [ ] Pressing `Esc` resolves `null`
-- [ ] When no commands match the query, the UI shows an empty state
-- [ ] Resizing the terminal keeps rendering valid and selection stable
+- [x] Given a cwd, matching commands are visible immediately
+- [x] Typing `dev` filters the list to dev-like commands
+- [x] Moving down changes the selected item
+- [x] Pressing `Enter` resolves the correct command string
+- [x] Pressing `Esc` resolves `null`
+- [x] When no commands match the query, the UI shows an empty state
+- [x] Resizing the terminal keeps rendering valid and selection stable
 
 ### Acceptance criteria
 
-- [ ] Core interactive behavior is covered end-to-end
-- [ ] Tests are reliable enough for repeated agent-driven runs
+- [x] Core interactive behavior is covered end-to-end
+- [x] Tests are reliable enough for repeated agent-driven runs
 
 ---
 
 ## Phase 10: Unit tests
 
-- [ ] Add tests for command normalization
-- [ ] Add tests for glob matching
-- [ ] Add tests for home-directory expansion if supported
-- [ ] Add tests for ranking behavior
-- [ ] Add tests for selection-index clamping during filter changes
-- [ ] Add tests for CLI stdout/stderr behavior where practical
+- [x] Add tests for command normalization
+- [x] Add tests for glob matching
+- [x] Add tests for home-directory expansion if supported
+- [x] Add tests for ranking behavior
+- [x] Add tests for selection-index clamping during filter changes
+- [x] Add tests for CLI stdout/stderr behavior where practical
 
 ### Acceptance criteria
 
-- [ ] Matching and search logic are validated independently of the UI
-- [ ] Small regressions can be diagnosed without reading terminal snapshots
+- [x] Matching and search logic are validated independently of the UI
+- [x] Small regressions can be diagnosed without reading terminal snapshots
 
 ---
 
 ## Phase 11: Documentation and examples
 
-- [ ] Update `README.md` with project purpose
-- [ ] Add installation instructions
-- [ ] Add usage instructions
-- [ ] Add config examples
-- [ ] Add `zsh` integration instructions
-- [ ] Add testing instructions
-- [ ] Add screenshots or sample terminal output if useful
+- [x] Update `README.md` with project purpose
+- [x] Add installation instructions
+- [x] Add usage instructions
+- [x] Add config examples
+- [x] Add `zsh` integration instructions
+- [x] Add testing instructions
+- [x] Add screenshots or sample terminal output if useful
 
 ### README should answer
 
-- [ ] What is quickrun?
-- [ ] How do I define commands?
-- [ ] How does cwd matching work?
-- [ ] How do I run it manually?
-- [ ] How do I wire it into `zsh`?
-- [ ] How do I run the tests?
+- [x] What is quickrun?
+- [x] How do I define commands?
+- [x] How does cwd matching work?
+- [x] How do I run it manually?
+- [x] How do I wire it into `zsh`?
+- [x] How do I run the tests?
 
 ---
 
 ## Phase 12: Final verification
 
-- [ ] Run the full test suite with `bun test`
-- [ ] Manually smoke-test the CLI in a real terminal
-- [ ] Manually smoke-test the `zsh` wrapper
-- [ ] Verify stdout contains only the selected command
-- [ ] Verify cancel path is safe
-- [ ] Verify a narrow terminal still behaves acceptably
+- [x] Run the full test suite with `bun test`
+- [x] Manually smoke-test the CLI in a real terminal
+- [x] Manually smoke-test the `zsh` wrapper
+- [x] Verify stdout contains only the selected command
+- [x] Verify cancel path is safe
+- [x] Verify a narrow terminal still behaves acceptably
 
 ### Definition of done
 
-- [ ] The interactive selector works in a real terminal
-- [ ] Commands are filtered by cwd glob patterns
-- [ ] Search and keyboard navigation are responsive
-- [ ] `Enter` returns the intended command
-- [ ] `zsh` integration executes the chosen command in the current shell
-- [ ] Integration tests cover the critical interaction flow
-- [ ] The README is sufficient for first use
+- [x] The interactive selector works in a real terminal
+- [x] Commands are filtered by cwd glob patterns
+- [x] Search and keyboard navigation are responsive
+- [x] `Enter` returns the intended command
+- [x] `zsh` integration executes the chosen command in the current shell
+- [x] Integration tests cover the critical interaction flow
+- [x] The README is sufficient for first use
 
 ---
 

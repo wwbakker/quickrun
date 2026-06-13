@@ -1,0 +1,160 @@
+import { describe, expect, test } from "bun:test";
+import { visibleWidth } from "@earendil-works/pi-tui";
+
+import { runSelector } from "../src/app.ts";
+import type { QuickCommand } from "../src/types.ts";
+import { VirtualTerminal } from "./virtual-terminal.ts";
+
+const commands: QuickCommand[] = [
+  {
+    id: "dev",
+    title: "Dev server",
+    command: "bun run dev",
+    when: ["/Users/tester/Repos/personal/quickrun-ts", "/Users/tester/Repos/personal/quickrun-ts/**"],
+    description: "Start the app in development mode.",
+    tags: ["frontend", "dev"],
+  },
+  {
+    id: "test",
+    title: "Run tests",
+    command: "bun test",
+    when: ["/Users/tester/Repos/personal/quickrun-ts", "/Users/tester/Repos/personal/quickrun-ts/**"],
+    description: "Execute the test suite.",
+    tags: ["qa", "test"],
+  },
+  {
+    id: "deploy",
+    title: "Deploy work app",
+    command: "./deploy.sh",
+    when: ["/Users/tester/Repos/work/app", "/Users/tester/Repos/work/app/**"],
+    description: "Deploy the work application.",
+    tags: ["work", "deploy"],
+  },
+];
+
+async function startSelector(cwd: string, columns: number = 80, rows: number = 20): Promise<{
+  terminal: VirtualTerminal;
+  resultPromise: Promise<string | null>;
+}> {
+  const terminal = new VirtualTerminal(columns, rows);
+  const resultPromise = runSelector({
+    terminal,
+    cwd,
+    commands,
+  });
+  await terminal.waitForRender();
+  return { terminal, resultPromise };
+}
+
+async function sendInputAndWait(terminal: VirtualTerminal, data: string): Promise<void> {
+  terminal.sendInput(data);
+  await terminal.waitForRender();
+}
+
+describe("phase 9 integration flow", () => {
+  test("renders matching commands immediately for the current cwd", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+    const viewport: string = terminal.getViewport().join("\n");
+
+    expect(viewport).toContain("Dev server");
+    expect(viewport).toContain("Run tests");
+    expect(viewport).not.toContain("Deploy work app");
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("applies cwd filtering end-to-end", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/work/app");
+    const viewport: string = terminal.getViewport().join("\n");
+
+    expect(viewport).toContain("Deploy work app");
+    expect(viewport).not.toContain("Dev server");
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("filters results when typing into search", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    await sendInputAndWait(terminal, "d");
+    await sendInputAndWait(terminal, "e");
+    await sendInputAndWait(terminal, "v");
+
+    const viewport: string = terminal.getViewport().join("\n");
+    expect(viewport).toContain("search: dev");
+    expect(viewport).toContain("Dev server");
+    expect(viewport).not.toContain("Run tests");
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("moves selection with arrow keys", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    await sendInputAndWait(terminal, "\u001b[B");
+
+    const viewport: string = terminal.getViewport().join("\n");
+    expect(viewport).toContain("> Run tests");
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("returns the selected command on Enter", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    await sendInputAndWait(terminal, "\u001b[B");
+    terminal.sendInput("\r");
+
+    await expect(resultPromise).resolves.toBe("bun test");
+  });
+
+  test("returns null on Esc", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("returns null on Ctrl-C", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    terminal.sendInput("\u0003");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("shows a no-results state when the query matches nothing", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    await sendInputAndWait(terminal, "z");
+    await sendInputAndWait(terminal, "z");
+
+    const viewport: string = terminal.getViewport().join("\n");
+    expect(viewport).toContain('No commands match "zz".');
+
+    terminal.sendInput("\u001b");
+    await expect(resultPromise).resolves.toBeNull();
+  });
+
+  test("keeps rendering valid and selection stable after resize", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts", 80, 20);
+
+    await sendInputAndWait(terminal, "\u001b[B");
+    terminal.resize(32, 12);
+    await terminal.waitForRender();
+
+    const viewportLines: string[] = terminal.getViewport();
+    expect(viewportLines.join("\n")).toContain("Run tests");
+    expect(viewportLines.join("\n")).toContain("> Run tests");
+
+    for (const line of viewportLines) {
+      expect(visibleWidth(line)).toBeLessThanOrEqual(32);
+    }
+
+    terminal.sendInput("\r");
+    await expect(resultPromise).resolves.toBe("bun test");
+  });
+});

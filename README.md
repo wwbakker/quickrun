@@ -7,16 +7,24 @@ The current implementation is an incremental build toward a searchable TUI that:
 - lets you navigate the results with the keyboard, and
 - prints the selected command so a shell wrapper can execute it in the current shell.
 
+The CLI renders the interactive UI on the terminal stream and keeps the final selected command on stdout so shell wrappers can capture it cleanly.
+
 ## Install dependencies
 
 ```bash
 bun install
 ```
 
-## Run the current TUI
+## Run the TUI
 
 ```bash
 bun run index.ts
+```
+
+Or, using the package scripts:
+
+```bash
+bun run start
 ```
 
 Current controls:
@@ -25,6 +33,20 @@ Current controls:
 - `Enter` to emit the selected command
 - `Backspace` to edit the query
 - `Esc` / `Ctrl-C` to cancel
+
+Example terminal output:
+
+```text
+Quickrun
+cwd: /Users/you/Repos/personal/my-app
+search: dev
+Showing 1 command.
+
+> Dev server
+  bun run dev
+  Start the app in development mode.
+  tags: frontend, dev
+```
 
 ## Command configuration
 
@@ -90,12 +112,48 @@ Examples:
 - `~/Repos/personal/my-app` matches that exact project root.
 - `~/Repos/personal/my-app/**` also matches nested directories inside the project.
 
+## zsh integration
+
+Sample wrappers are included at:
+
+- `examples/quickrun.zsh` — expects `quickrun-ts` on your `PATH`
+- `examples/quickrun-bun.zsh` — runs the repo source with `bun run` on every invocation
+
+You can either copy a function into `~/.zshrc` or source one of those files.
+
+Examples:
+
+```zsh
+source /absolute/path/to/quickrun-ts/examples/quickrun.zsh
+source /absolute/path/to/quickrun-ts/examples/quickrun-bun.zsh
+```
+
+Use `examples/quickrun-bun.zsh` during development if you want source changes to be reflected the next time `qr` runs, without reinstalling or rebuilding anything.
+
+If you prefer not to source the file and instead copy the function into `~/.zshrc`, point it at this repo directly, for example:
+
+```zsh
+export QUICKRUN_REPO_DIR=/absolute/path/to/quickrun-ts
+cmd="$(bun run "$QUICKRUN_REPO_DIR/index.ts")" || return
+```
+
+Wrapper behavior:
+- captures the selected command from stdout
+- does nothing when the selector is cancelled
+- executes the selected command in the current shell with `eval`
+
+### Safety note
+
+The zsh wrapper uses `eval` so the emitted command runs in your current shell context. That is necessary for shell-native behavior, but it also means you should only configure commands you trust.
+
 ## Development notes
 
-- `index.ts` is a thin entrypoint
-- `src/cli.ts` starts the real terminal app
+- `index.ts` is a thin executable entrypoint with a Bun shebang
+- `src/cli.ts` contains the CLI contract and stdout/stderr behavior
 - `src/app.ts` exposes the testable selector runner
+- `src/selector.ts` owns interactive search/navigation rendering
 - `src/commands.ts` contains the built-in global TypeScript config
+- `test/virtual-terminal.ts` vendors the upstream virtual terminal harness for integration tests
 
 ## Tests
 
@@ -105,8 +163,24 @@ Run the full test suite with:
 bun test
 ```
 
+Or:
+
+```bash
+bun run test
+```
+
 Type-check with:
 
 ```bash
 bunx tsc --noEmit
 ```
+
+Or:
+
+```bash
+bun run typecheck
+```
+
+The automated test suite includes:
+- unit tests for config, cwd matching, search, selector behavior, and CLI output contracts
+- integration tests that drive the TUI through a virtual terminal based on `@xterm/headless`
