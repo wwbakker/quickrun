@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { filterCommandsByQuery, normalizeSearchQuery, scoreCommandForQuery } from "../src/search.ts";
-import type { QuickCommand } from "../src/types.ts";
+import type { QuickCommand, QuickEntry } from "../src/types.ts";
 
 const commands: QuickCommand[] = [
   {
@@ -79,6 +79,26 @@ describe("phase 4 search and ranking", () => {
     expect(rankedCommands).toEqual(["Dev server", "Start app"]);
 
     expect(scoreCommandForQuery(commands[0]!, "dev")).toBeGreaterThan(scoreCommandForQuery(commands[1]!, "dev") ?? 0);
+  });
+
+  test("searches groups by title and tags", () => {
+    const entries: QuickEntry[] = [
+      ...commands,
+      {
+        title: "cd",
+        when: "**",
+        tags: ["directories", "jump"],
+        commands: [
+          {
+            title: "Downloads",
+            command: "cd ~/Downloads",
+          },
+        ],
+      },
+    ];
+
+    expect(filterCommandsByQuery(entries, "dir").map((command: QuickEntry) => command.title)).toContain("cd");
+    expect(scoreCommandForQuery(entries[5]!, "jump")).toBeGreaterThan(0);
   });
 
   test("returns no results when nothing matches", () => {

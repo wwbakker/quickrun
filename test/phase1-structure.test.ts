@@ -4,6 +4,7 @@ import type { Terminal } from "@earendil-works/pi-tui";
 
 import { runSelector } from "../src/app.ts";
 import { commands } from "../src/commands.ts";
+import { isQuickGroup } from "../src/types.ts";
 
 class ImmediateCancelTerminal implements Terminal {
   private inputHandler?: (data: string) => void;
@@ -65,7 +66,8 @@ describe("phase 1 scaffold", () => {
   test("exports a typed example command registry", () => {
     expect(commands.length).toBeGreaterThan(0);
     expect(commands[0]?.title).toBeString();
-    expect(commands[0]?.command).toBeString();
+    expect(isQuickGroup(commands[0]!)).toBeFalse();
+    expect(isQuickGroup(commands[0]!) ? undefined : commands[0]!.command).toBeString();
   });
 
   test("can start the selector with an injected terminal and cancel safely", async () => {

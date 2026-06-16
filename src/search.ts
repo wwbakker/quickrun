@@ -1,4 +1,8 @@
-import type { QuickCommand } from "./types.ts";
+interface SearchableEntry {
+  title: string;
+  tags?: string[];
+  command?: string;
+}
 
 export function normalizeSearchQuery(query: string): string {
   return query.trim().toLocaleLowerCase().replace(/\s+/g, " ");
@@ -23,11 +27,11 @@ function fieldHasWordPrefix(field: string, query: string): boolean {
     .some((word: string) => word.startsWith(query));
 }
 
-function buildSearchHaystack(command: QuickCommand): string {
-  return [command.title, command.command, ...(command.tags ?? [])].join(" ").toLocaleLowerCase();
+function buildSearchHaystack(command: SearchableEntry): string {
+  return [command.title, command.command ?? "", ...(command.tags ?? [])].join(" ").toLocaleLowerCase();
 }
 
-function scoreCommandForTerm(command: QuickCommand, haystack: string, term: string): number | null {
+function scoreCommandForTerm(command: SearchableEntry, haystack: string, term: string): number | null {
   if (!haystack.includes(term)) {
     return null;
   }
@@ -44,10 +48,12 @@ function scoreCommandForTerm(command: QuickCommand, haystack: string, term: stri
     score = Math.max(score, 800);
   }
 
-  if (fieldStartsWith(command.command, term)) {
-    score = Math.max(score, 700);
-  } else if (fieldIncludes(command.command, term)) {
-    score = Math.max(score, 650);
+  if (command.command !== undefined) {
+    if (fieldStartsWith(command.command, term)) {
+      score = Math.max(score, 700);
+    } else if (fieldIncludes(command.command, term)) {
+      score = Math.max(score, 650);
+    }
   }
 
   for (const tag of command.tags ?? []) {
@@ -74,7 +80,7 @@ function scoreCommandForTerm(command: QuickCommand, haystack: string, term: stri
  * Lightweight ranking tuned for predictable terminal search results.
  * Higher scores rank earlier; `null` means "no match".
  */
-export function scoreCommandForQuery(command: QuickCommand, query: string): number | null {
+export function scoreCommandForQuery<T extends SearchableEntry>(command: T, query: string): number | null {
   const normalizedQuery: string = normalizeSearchQuery(query);
   const queryTerms: string[] = splitNormalizedSearchQuery(normalizedQuery);
 
@@ -109,7 +115,7 @@ export function scoreCommandForQuery(command: QuickCommand, query: string): numb
 /**
  * Search stays intentionally small and predictable so the terminal UI remains easy to reason about.
  */
-export function filterCommandsByQuery(commands: readonly QuickCommand[], query: string): QuickCommand[] {
+export function filterCommandsByQuery<T extends SearchableEntry>(commands: readonly T[], query: string): T[] {
   const normalizedQuery: string = normalizeSearchQuery(query);
 
   if (normalizedQuery.length === 0) {
@@ -117,11 +123,11 @@ export function filterCommandsByQuery(commands: readonly QuickCommand[], query: 
   }
 
   return commands
-    .map((command: QuickCommand, index: number) => {
+    .map((command: T, index: number) => {
       const score: number | null = scoreCommandForQuery(command, normalizedQuery);
       return score === null ? null : { command, score, index };
     })
-    .filter((match): match is { command: QuickCommand; score: number; index: number } => match !== null)
+    .filter((match): match is { command: T; score: number; index: number } => match !== null)
     .sort((left, right) => {
       if (right.score !== left.score) {
         return right.score - left.score;

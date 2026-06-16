@@ -26,5 +26,22 @@ export const quickrunExampleConfig: QuickrunConfig = defineQuickrunConfig({
       when: ["~/Repos/**", "~/work/**"],
       tags: ["ts", "types"],
     },
+    {
+      title: "cd",
+      when: ["**"],
+      tags: ["directories", "jump"],
+      commands: [
+        {
+          title: "Downloads",
+          command: "cd ~/Downloads",
+          tags: ["files"],
+        },
+        {
+          title: "Work",
+          command: "cd ~/work",
+          tags: ["projects"],
+        },
+      ],
+    },
   ]),
 });

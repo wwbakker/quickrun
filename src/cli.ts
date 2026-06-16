@@ -3,7 +3,7 @@ import type { Terminal } from "@earendil-works/pi-tui";
 import { runSelector, type RunSelectorOptions } from "./app.ts";
 import { commands } from "./commands.ts";
 import { StdioTerminal } from "./stdio-terminal.ts";
-import type { QuickCommand } from "./types.ts";
+import type { QuickEntry } from "./types.ts";
 
 export interface WritableTextStream {
   write(chunk: string): unknown;
@@ -14,7 +14,7 @@ export type SelectorRunner = (options: RunSelectorOptions) => Promise<string | n
 export interface RunCliOptions {
   terminal: Terminal;
   cwd: string;
-  commands: QuickCommand[];
+  commands: QuickEntry[];
   stdout: WritableTextStream;
   stderr: WritableTextStream;
   runSelectorFn?: SelectorRunner;

@@ -2,7 +2,7 @@ import { TUI, type Terminal } from "@earendil-works/pi-tui";
 
 import { filterCommandsForCwd } from "./match.ts";
 import { QuickrunSelector } from "./selector.ts";
-import type { QuickCommand } from "./types.ts";
+import type { QuickAction, QuickEntry } from "./types.ts";
 
 interface TuiInternals {
   previousLines: string[];
@@ -17,7 +17,7 @@ interface InlineUiTerminal {
 export interface RunSelectorOptions {
   terminal: Terminal;
   cwd: string;
-  commands: QuickCommand[];
+  commands: QuickEntry[];
 }
 
 function isInlineUiTerminal(terminal: Terminal): terminal is Terminal & InlineUiTerminal {
@@ -49,13 +49,13 @@ export async function runSelector(options: RunSelectorOptions): Promise<string |
     try {
       const tui: TUI = new TUI(options.terminal);
       const tuiInternals = tui as unknown as TuiInternals;
-      const visibleCommands: QuickCommand[] = filterCommandsForCwd(options.commands, options.cwd);
+      const visibleCommands: QuickEntry[] = filterCommandsForCwd(options.commands, options.cwd);
       let settled: boolean = false;
 
       const selector: QuickrunSelector = new QuickrunSelector({
         cwd: options.cwd,
         commands: visibleCommands,
-        onSelect: (command: QuickCommand) => {
+        onSelect: (command: QuickAction) => {
           finish(command.command);
         },
         onCancel: () => {

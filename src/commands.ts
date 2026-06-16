@@ -1,12 +1,12 @@
-import { defineCommands, defineQuickrunConfig, type QuickCommand, type QuickrunConfig } from "./types.ts";
+import { defineCommands, defineQuickrunConfig, type QuickEntry, type QuickrunConfig } from "./types.ts";
 import { quickrunExampleConfig } from "./commands.example.ts";
 
 interface QuickrunLocalModule {
-  localCommands?: QuickCommand[];
+  localCommands?: QuickEntry[];
   quickrunLocalConfig?: QuickrunConfig;
 }
 
-function getLocalCommandsFromModule(module: QuickrunLocalModule): QuickCommand[] {
+function getLocalCommandsFromModule(module: QuickrunLocalModule): QuickEntry[] {
   if (module.quickrunLocalConfig !== undefined) {
     return defineCommands(module.quickrunLocalConfig.commands);
   }
@@ -18,7 +18,7 @@ function getLocalCommandsFromModule(module: QuickrunLocalModule): QuickCommand[]
   return [];
 }
 
-async function loadLocalCommands(): Promise<QuickCommand[]> {
+async function loadLocalCommands(): Promise<QuickEntry[]> {
   const localCommandsUrl: URL = new URL("./commands.local.ts", import.meta.url);
   if (!(await Bun.file(localCommandsUrl).exists())) {
     return [];
@@ -37,10 +37,10 @@ async function loadLocalCommands(): Promise<QuickCommand[]> {
  * If `src/commands.local.ts` exists, its commands are appended after the example
  * commands so local entries can extend the default registry without editing tracked files.
  */
-const localCommands: QuickCommand[] = await loadLocalCommands();
+const localCommands: QuickEntry[] = await loadLocalCommands();
 
 export const quickrunConfig: QuickrunConfig = defineQuickrunConfig({
   commands: defineCommands([...quickrunExampleConfig.commands, ...localCommands]),
 });
 
-export const commands: QuickCommand[] = quickrunConfig.commands;
+export const commands: QuickEntry[] = quickrunConfig.commands;

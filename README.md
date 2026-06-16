@@ -28,19 +28,20 @@ bun run start
 ```
 
 Current controls:
-- type to filter commands
+- type to filter commands and groups
 - space-separated search terms are AND-matched, so `env easy` matches entries containing both terms in any order
 - `↑` / `↓` to move the selection
-- `Enter` to emit the selected command
-- `Backspace` to edit the query
+- `Enter` to emit the selected command, or open the selected group
+- `Backspace` to edit the query, or leave the current group when the query is empty
 - `Ctrl-C` to clear the current search query
-- `Esc` / `Ctrl-D` to cancel
+- `Esc` / `Ctrl-D` to leave the current group, or cancel from the root
 
 Example terminal output:
 
 ```text
 Dev server  bun run dev
 Run tests   bun test
+cd          open group
 Build app   bun run build
 ```
 
@@ -55,14 +56,24 @@ Quickrun now uses a two-layer config setup:
 
 For personal customization, put your real machine-specific commands in `src/commands.local.ts` instead of editing the tracked example file.
 
-### Command shape
+### Command and group shape
 
 ```ts
-export interface QuickCommand {
+export interface QuickAction {
   title: string;
   command: string;
+  tags?: string[];
+}
+
+export interface QuickCommand extends QuickAction {
+  when: string | string[];
+}
+
+export interface QuickGroup {
+  title: string;
   when: string | string[];
   tags?: string[];
+  commands: QuickAction[];
 }
 ```
 
@@ -70,8 +81,9 @@ export interface QuickCommand {
 
 - `title`: primary label shown in the selector
 - `command`: shell command emitted when the entry is selected
-- `when`: one or more cwd glob patterns that control visibility
+- `when`: one or more cwd glob patterns that control visibility for top-level commands and groups
 - `tags`: optional extra search keywords that are not already obvious from the title or command
+- `commands`: commands inside a group; these do not need their own `when` values because the group already controls visibility
 
 ### Example local file
 
@@ -88,26 +100,42 @@ export const quickrunLocalConfig: QuickrunConfig = defineQuickrunConfig({
       when: ["~/Repos/personal/my-app", "~/Repos/personal/my-app/**"],
       tags: ["frontend", "vite", "local"],
     },
+    {
+      title: "cd",
+      when: ["~/Repos/**", "~/work/**"],
+      tags: ["directories", "jump"],
+      commands: [
+        {
+          title: "Personal repo",
+          command: "cd ~/Repos/personal/my-app",
+        },
+        {
+          title: "Downloads",
+          command: "cd ~/Downloads",
+        },
+      ],
+    },
   ]),
 });
 ```
 
 You can also export `localCommands` directly instead of `quickrunLocalConfig` if you prefer.
 
-Using an array for `when` lets one command appear in multiple project scopes.
+Using an array for `when` lets one top-level command or group appear in multiple project scopes.
 
 ## Result list format
 
-Each visible command is rendered on a single line:
+Each visible command or group is rendered on a single line:
 - aligned title column
 - aligned command column
 - white `title`
-- gray `command`
+- gray command text, or `open group` for groups
 - selected row shown with a light background and darker foreground
+- when a group is open, a small `group-name/` header is shown above its commands
 
 ## cwd matching rules
 
-- A command is visible when **any** glob in `when` matches the current working directory.
+- A top-level command or group is visible when **any** glob in `when` matches the current working directory.
 - Matching is done against **normalized absolute paths**.
 - `~` is expanded to the current user's home directory.
 - Paths are normalized to use forward slashes.
@@ -116,6 +144,7 @@ Each visible command is rendered on a single line:
 Examples:
 - `~/Repos/personal/my-app` matches that exact project root.
 - `~/Repos/personal/my-app/**` also matches nested directories inside the project.
+- `**` matches every working directory.
 
 ## zsh integration
 

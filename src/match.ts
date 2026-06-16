@@ -2,7 +2,9 @@ import { Glob } from "bun";
 import os from "node:os";
 import path from "node:path";
 
-import type { QuickCommand } from "./types.ts";
+interface ScopedEntry {
+  when: string | string[];
+}
 
 /**
  * Expand a leading home-directory marker so config patterns can use `~` ergonomically.
@@ -46,6 +48,11 @@ export function normalizePath(inputPath: string, homeDirectory: string = os.home
  */
 export function normalizeGlobPattern(pattern: string, homeDirectory: string = os.homedir()): string {
   const expandedPattern: string = expandHomeDirectory(pattern, homeDirectory);
+
+  if (expandedPattern === "**") {
+    return expandedPattern;
+  }
+
   const resolvedPattern: string = path.isAbsolute(expandedPattern)
     ? path.normalize(expandedPattern)
     : path.resolve(expandedPattern);
@@ -53,7 +60,7 @@ export function normalizeGlobPattern(pattern: string, homeDirectory: string = os
   return trimTrailingSlash(normalizePathSeparators(resolvedPattern));
 }
 
-export function getCommandPatterns(command: QuickCommand): string[] {
+export function getCommandPatterns<T extends ScopedEntry>(command: T): string[] {
   return Array.isArray(command.when) ? [...command.when] : [command.when];
 }
 
@@ -63,10 +70,10 @@ export function matchesCwdPattern(cwd: string, pattern: string): boolean {
   return new Glob(normalizedPattern).match(normalizedCwd);
 }
 
-export function commandMatchesCwd(command: QuickCommand, cwd: string): boolean {
+export function commandMatchesCwd<T extends ScopedEntry>(command: T, cwd: string): boolean {
   return getCommandPatterns(command).some((pattern: string) => matchesCwdPattern(cwd, pattern));
 }
 
-export function filterCommandsForCwd(commands: readonly QuickCommand[], cwd: string): QuickCommand[] {
-  return commands.filter((command: QuickCommand) => commandMatchesCwd(command, cwd));
+export function filterCommandsForCwd<T extends ScopedEntry>(commands: readonly T[], cwd: string): T[] {
+  return commands.filter((command: T) => commandMatchesCwd(command, cwd));
 }

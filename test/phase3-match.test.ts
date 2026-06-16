@@ -20,6 +20,7 @@ describe("phase 3 cwd matching", () => {
   test("normalizes paths and patterns to absolute forward-slash paths", () => {
     expect(normalizePath("~/Repos/demo", "/Users/tester")).toBe("/Users/tester/Repos/demo");
     expect(normalizeGlobPattern("~/Repos/demo/**", "/Users/tester")).toBe("/Users/tester/Repos/demo/**");
+    expect(normalizeGlobPattern("**", "/Users/tester")).toBe("**");
   });
 
   test("matches exact project paths", () => {
@@ -28,6 +29,11 @@ describe("phase 3 cwd matching", () => {
 
   test("matches nested directories inside a project", () => {
     expect(matchesCwdPattern("/Users/tester/Repos/personal/quickrun-ts/src/components", "/Users/tester/Repos/personal/quickrun-ts/**")).toBeTrue();
+  });
+
+  test("treats ** as a global match", () => {
+    expect(matchesCwdPattern("/Users/tester/Repos/personal/quickrun-ts", "**")).toBeTrue();
+    expect(matchesCwdPattern("/tmp/project", "**")).toBeTrue();
   });
 
   test("uses any-glob semantics for command visibility", () => {

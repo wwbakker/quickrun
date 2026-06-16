@@ -1,18 +1,34 @@
-export interface QuickCommand {
+export interface QuickAction {
   title: string;
   command: string;
-  when: string | string[];
   tags?: string[];
 }
 
+export interface QuickCommand extends QuickAction {
+  when: string | string[];
+}
+
+export interface QuickGroup {
+  title: string;
+  when: string | string[];
+  tags?: string[];
+  commands: QuickAction[];
+}
+
+export type QuickEntry = QuickCommand | QuickGroup;
+
 export interface QuickrunConfig {
-  commands: QuickCommand[];
+  commands: QuickEntry[];
+}
+
+export function isQuickGroup(entry: QuickEntry | QuickAction): entry is QuickGroup {
+  return "commands" in entry;
 }
 
 /**
- * Small helper to keep per-command configuration ergonomic while preserving strong typing.
+ * Small helper to keep top-level command and group configuration ergonomic while preserving strong typing.
  */
-export function defineCommands(commands: readonly QuickCommand[]): QuickCommand[] {
+export function defineCommands(commands: readonly QuickEntry[]): QuickEntry[] {
   return [...commands];
 }
 

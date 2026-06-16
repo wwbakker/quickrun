@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { visibleWidth } from "@earendil-works/pi-tui";
 
 import { runSelector } from "../src/app.ts";
-import type { QuickCommand } from "../src/types.ts";
+import type { QuickEntry } from "../src/types.ts";
 import { VirtualTerminal } from "./virtual-terminal.ts";
 
-const commands: QuickCommand[] = [
+const commands: QuickEntry[] = [
   {
     title: "Dev server",
     command: "bun run dev",
@@ -17,6 +17,21 @@ const commands: QuickCommand[] = [
     command: "bun test",
     when: ["/Users/tester/Repos/personal/quickrun-ts", "/Users/tester/Repos/personal/quickrun-ts/**"],
     tags: ["qa", "checks"],
+  },
+  {
+    title: "cd",
+    when: ["/Users/tester/Repos/**"],
+    tags: ["directories"],
+    commands: [
+      {
+        title: "Repos",
+        command: "cd ~/Repos",
+      },
+      {
+        title: "Downloads",
+        command: "cd ~/Downloads",
+      },
+    ],
   },
   {
     title: "Deploy work app",
@@ -52,7 +67,7 @@ describe("phase 9 integration flow", () => {
 
     expect(viewport).toContain("Dev server  bun run dev");
     expect(viewport).toContain("Run tests   bun test");
-    expect(viewport).not.toContain("Deploy work app");
+    expect(viewport).toContain("cd          open group");
     expect(viewport).not.toContain("Quickrun");
     expect(viewport).not.toContain("search:");
 
@@ -65,6 +80,7 @@ describe("phase 9 integration flow", () => {
     const viewport: string = terminal.getViewport().join("\n");
 
     expect(viewport).toContain("Deploy work app  ./deploy.sh");
+    expect(viewport).toContain("cd               open group");
     expect(viewport).not.toContain("Dev server");
 
     terminal.sendInput("\u001b");
@@ -106,6 +122,24 @@ describe("phase 9 integration flow", () => {
     await expect(resultPromise).resolves.toBeNull();
   });
 
+  test("opens groups and returns commands selected inside them", async () => {
+    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+
+    await sendInputAndWait(terminal, "\u001b[B");
+    await sendInputAndWait(terminal, "\u001b[B");
+    await sendInputAndWait(terminal, "\r");
+
+    const groupViewport: string = terminal.getViewport().join("\n");
+    expect(groupViewport).toContain("cd/");
+    expect(groupViewport).toContain("Repos      cd ~/Repos");
+    expect(groupViewport).toContain("Downloads  cd ~/Downloads");
+
+    await sendInputAndWait(terminal, "\u001b[B");
+    terminal.sendInput("\r");
+
+    await expect(resultPromise).resolves.toBe("cd ~/Downloads");
+  });
+
   test("moves selection with arrow keys", async () => {
     const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
 
@@ -125,13 +159,24 @@ describe("phase 9 integration flow", () => {
     expect(terminal.getViewport().join("\n")).toContain("ran bun run dev");
   });
 
-  test("returns null on Esc and clears the UI", async () => {
-    const { terminal, resultPromise } = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+  test("leaves a group on Esc and clears the UI when Esc is pressed from the root", async () => {
+    const grouped = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+    await sendInputAndWait(grouped.terminal, "\u001b[B");
+    await sendInputAndWait(grouped.terminal, "\u001b[B");
+    await sendInputAndWait(grouped.terminal, "\r");
 
-    terminal.sendInput("\u001b");
-    await expect(resultPromise).resolves.toBeNull();
-    await terminal.flush();
-    expect(terminal.getViewport().join("\n").trim()).toBe("");
+    grouped.terminal.sendInput("\u001b");
+    await grouped.terminal.waitForRender();
+    expect(grouped.terminal.getViewport().join("\n")).toContain("cd          open group");
+
+    grouped.terminal.sendInput("\u001b");
+    await expect(grouped.resultPromise).resolves.toBeNull();
+
+    const rooted = await startSelector("/Users/tester/Repos/personal/quickrun-ts");
+    rooted.terminal.sendInput("\u001b");
+    await expect(rooted.resultPromise).resolves.toBeNull();
+    await rooted.terminal.flush();
+    expect(rooted.terminal.getViewport().join("\n").trim()).toBe("");
   });
 
   test("returns null on Ctrl-D and clears the UI", async () => {

@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { visibleWidth } from "@earendil-works/pi-tui";
 
 import { QuickrunSelector } from "../src/selector.ts";
-import type { QuickCommand } from "../src/types.ts";
+import type { QuickAction, QuickEntry } from "../src/types.ts";
 
 const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
 
@@ -11,7 +11,7 @@ function stripAnsi(text: string): string {
   return text.replaceAll(ANSI_PATTERN, "");
 }
 
-const commands: QuickCommand[] = [
+const commands: QuickEntry[] = [
   {
     title: "Dev server",
     command: "bun run dev",
@@ -25,6 +25,23 @@ const commands: QuickCommand[] = [
     tags: ["qa", "checks"],
   },
   {
+    title: "cd",
+    when: "**",
+    tags: ["directories"],
+    commands: [
+      {
+        title: "Repos",
+        command: "cd ~/Repos",
+        tags: ["root"],
+      },
+      {
+        title: "Downloads",
+        command: "cd ~/Downloads",
+        tags: ["files"],
+      },
+    ],
+  },
+  {
     title: "Build app",
     command: "bun run build",
     when: "**",
@@ -32,20 +49,20 @@ const commands: QuickCommand[] = [
   },
 ];
 
-function createSelector(overrides?: Partial<{ commands: QuickCommand[] }>): {
+function createSelector(overrides?: Partial<{ commands: QuickEntry[] }>): {
   selector: QuickrunSelector;
-  selectedCommands: QuickCommand[];
+  selectedCommands: QuickAction[];
   cancelCount: number;
   renderCount: number;
 } {
-  const selectedCommands: QuickCommand[] = [];
+  const selectedCommands: QuickAction[] = [];
   let cancelCount: number = 0;
   let renderCount: number = 0;
 
   const selector: QuickrunSelector = new QuickrunSelector({
     cwd: "/Users/tester/Repos/personal/quickrun-ts",
     commands: overrides?.commands ?? commands,
-    onSelect: (command: QuickCommand) => {
+    onSelect: (command: QuickAction) => {
       selectedCommands.push(command);
     },
     onCancel: () => {
@@ -76,7 +93,8 @@ describe("phase 5 selector UI", () => {
 
     expect((plainLines[0] ?? "").startsWith("Dev server  bun run dev")).toBeTrue();
     expect(plainLines[1] ?? "").toBe("Run tests   bun test");
-    expect(plainLines[2] ?? "").toBe("Build app   bun run build");
+    expect(plainLines[2] ?? "").toBe("cd          open group");
+    expect(plainLines[3] ?? "").toBe("Build app   bun run build");
     expect(lines[0] ?? "").toContain("\x1b[107m");
     expect(lines[0] ?? "").toContain("\x1b[30mDev server");
     expect(lines[0] ?? "").toContain("\x1b[90mbun run dev");
@@ -109,11 +127,44 @@ describe("phase 5 selector UI", () => {
     expect(visibleWidth(lines[1] ?? "")).toBe(120);
 
     selector.handleInput("\r");
-    expect(selectedCommands.map((command: QuickCommand) => command.title)).toEqual(["Run tests"]);
+    expect(selectedCommands.map((command: QuickAction) => command.title)).toEqual(["Run tests"]);
+  });
+
+  test("opens groups and selects commands inside them", () => {
+    const { selector, selectedCommands } = createSelector();
+    selector.handleInput("\u001b[B");
+    selector.handleInput("\u001b[B");
+    selector.handleInput("\r");
+
+    const groupOutput: string = stripAnsi(selector.render(120).join("\n"));
+    expect(groupOutput).toContain("cd/");
+    expect(groupOutput).toContain("Repos      cd ~/Repos");
+    expect(groupOutput).toContain("Downloads  cd ~/Downloads");
+
+    selector.handleInput("\u001b[B");
+    selector.handleInput("\r");
+
+    expect(selectedCommands.map((command: QuickAction) => command.title)).toEqual(["Downloads"]);
+  });
+
+  test("backspace on an empty query leaves the current group", () => {
+    const { selector } = createSelector();
+    selector.handleInput("\u001b[B");
+    selector.handleInput("\u001b[B");
+    selector.handleInput("\r");
+
+    expect(stripAnsi(selector.render(120).join("\n"))).toContain("cd/");
+
+    selector.handleInput("\u007f");
+
+    const rootOutput: string = stripAnsi(selector.render(120).join("\n"));
+    expect(rootOutput).toContain("cd          open group");
+    expect(rootOutput).not.toContain("cd/");
   });
 
   test("clamps the selected row when filtering shrinks the result set", () => {
     const { selector, selectedCommands } = createSelector();
+    selector.handleInput("\u001b[B");
     selector.handleInput("\u001b[B");
     selector.handleInput("\u001b[B");
     selector.handleInput("t");
@@ -122,7 +173,7 @@ describe("phase 5 selector UI", () => {
     selector.handleInput("t");
     selector.handleInput("\r");
 
-    expect(selectedCommands.map((command: QuickCommand) => command.title)).toEqual(["Run tests"]);
+    expect(selectedCommands.map((command: QuickAction) => command.title)).toEqual(["Run tests"]);
   });
 
   test("shows a no-results state and lets Backspace recover", () => {
@@ -156,10 +207,14 @@ describe("phase 5 selector UI", () => {
     expect(harness.cancelCount).toBe(0);
   });
 
-  test("supports cancellation with Esc and Ctrl-D", () => {
+  test("supports leaving a group with Esc and cancelling from the root with Ctrl-D", () => {
     const escSelector = createSelector();
+    escSelector.selector.handleInput("\u001b[B");
+    escSelector.selector.handleInput("\u001b[B");
+    escSelector.selector.handleInput("\r");
     escSelector.selector.handleInput("\u001b");
-    expect(escSelector.cancelCount).toBe(1);
+    expect(stripAnsi(escSelector.selector.render(120).join("\n"))).toContain("cd          open group");
+    expect(escSelector.cancelCount).toBe(0);
 
     const ctrlDSelector = createSelector();
     ctrlDSelector.selector.handleInput("\u0004");
