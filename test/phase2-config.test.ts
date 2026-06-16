@@ -5,10 +5,10 @@ import { quickrunExampleConfig } from "../src/commands.example.ts";
 import { isQuickGroup } from "../src/types.ts";
 
 describe("phase 2 command config", () => {
-  test("exposes the example registry through the global config object", () => {
+  test("exposes the effective registry through the global config object", () => {
     expect(quickrunConfig.commands).toEqual(commands);
     expect(quickrunConfig.commands.length).toBeGreaterThan(0);
-    expect(quickrunConfig.commands.slice(0, quickrunExampleConfig.commands.length)).toEqual(quickrunExampleConfig.commands);
+    expect(quickrunConfig.commands).not.toEqual(quickrunExampleConfig.commands);
   });
 
   test("supports required and optional command fields", () => {
@@ -33,12 +33,12 @@ describe("phase 2 command config", () => {
     expect(isQuickGroup(group!) ? group.commands.length : 0).toBeGreaterThan(0);
   });
 
-  test("supports multiple cwd globs per command and covers multiple project patterns", () => {
+  test("supports multiple cwd globs per command and global patterns", () => {
     const commandsWithMultipleGlobs = commands.filter((command) => Array.isArray(command.when) && command.when.length > 1);
     expect(commandsWithMultipleGlobs.length).toBeGreaterThan(0);
 
     const allPatterns = commands.flatMap((command) => (Array.isArray(command.when) ? command.when : [command.when]));
-    expect(allPatterns).toContain("~/Repos/**");
-    expect(allPatterns).toContain("~/work/**");
+    expect(allPatterns).toContain("~/Repos/personal/quickrun-ts/**");
+    expect(allPatterns).toContain("**");
   });
 });

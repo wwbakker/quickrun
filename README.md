@@ -52,9 +52,10 @@ Quickrun now uses a two-layer config setup:
 - `src/commands.example.ts` — checked in example/default commands with generic paths
 - `src/commands.local.ts` — optional local commands file, ignored by Git
 
-`src/commands.ts` loads the checked-in example config and appends any commands from `src/commands.local.ts` when that file exists.
+`src/commands.ts` loads `src/commands.local.ts` when that file exists. If it does not exist, it falls back to the checked-in example config.
 
 For personal customization, put your real machine-specific commands in `src/commands.local.ts` instead of editing the tracked example file.
+A local config fully replaces the example config.
 
 ### Command and group shape
 
@@ -187,7 +188,7 @@ The zsh wrapper uses `eval` so the emitted command runs in your current shell co
 - `src/app.ts` exposes the testable selector runner
 - `src/selector.ts` owns interactive search/navigation rendering
 - `src/commands.example.ts` contains the checked-in example/default command config
-- `src/commands.ts` loads the example config plus optional local commands
+- `src/commands.ts` loads the local config when present, otherwise falls back to the example config
 - `test/virtual-terminal.ts` vendors the upstream virtual terminal harness for integration tests
 
 ## Tests

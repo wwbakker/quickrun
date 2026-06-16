@@ -18,10 +18,10 @@ function getLocalCommandsFromModule(module: QuickrunLocalModule): QuickEntry[] {
   return [];
 }
 
-async function loadLocalCommands(): Promise<QuickEntry[]> {
+async function loadLocalCommands(): Promise<QuickEntry[] | null> {
   const localCommandsUrl: URL = new URL("./commands.local.ts", import.meta.url);
   if (!(await Bun.file(localCommandsUrl).exists())) {
-    return [];
+    return null;
   }
 
   const localModule: QuickrunLocalModule = (await import(localCommandsUrl.href)) as QuickrunLocalModule;
@@ -34,13 +34,14 @@ async function loadLocalCommands(): Promise<QuickEntry[]> {
  * - `src/commands.example.ts` is checked in and provides the shared example/defaults.
  * - `src/commands.local.ts` is optional and gitignored for local customization.
  *
- * If `src/commands.local.ts` exists, its commands are appended after the example
- * commands so local entries can extend the default registry without editing tracked files.
+ * If `src/commands.local.ts` exists, it fully replaces the example registry.
+ * The checked-in example config is only used when no local config file exists.
  */
-const localCommands: QuickEntry[] = await loadLocalCommands();
+const localCommands: QuickEntry[] | null = await loadLocalCommands();
+const configuredCommands: QuickEntry[] = localCommands ?? quickrunExampleConfig.commands;
 
 export const quickrunConfig: QuickrunConfig = defineQuickrunConfig({
-  commands: defineCommands([...quickrunExampleConfig.commands, ...localCommands]),
+  commands: defineCommands(configuredCommands),
 });
 
 export const commands: QuickEntry[] = quickrunConfig.commands;
