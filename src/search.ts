@@ -1,7 +1,11 @@
 import type { QuickCommand } from "./types.ts";
 
 export function normalizeSearchQuery(query: string): string {
-  return query.trim().toLocaleLowerCase();
+  return query.trim().toLocaleLowerCase().replace(/\s+/g, " ");
+}
+
+function splitNormalizedSearchQuery(normalizedQuery: string): string[] {
+  return normalizedQuery.length === 0 ? [] : normalizedQuery.split(" ");
 }
 
 function fieldIncludes(field: string, query: string): boolean {
@@ -23,55 +27,80 @@ function buildSearchHaystack(command: QuickCommand): string {
   return [command.title, command.command, ...(command.tags ?? [])].join(" ").toLocaleLowerCase();
 }
 
+function scoreCommandForTerm(command: QuickCommand, haystack: string, term: string): number | null {
+  if (!haystack.includes(term)) {
+    return null;
+  }
+
+  let score: number = 0;
+
+  if (command.title.toLocaleLowerCase() === term) {
+    score = Math.max(score, 1_000);
+  } else if (fieldStartsWith(command.title, term)) {
+    score = Math.max(score, 900);
+  } else if (fieldHasWordPrefix(command.title, term)) {
+    score = Math.max(score, 850);
+  } else if (fieldIncludes(command.title, term)) {
+    score = Math.max(score, 800);
+  }
+
+  if (fieldStartsWith(command.command, term)) {
+    score = Math.max(score, 700);
+  } else if (fieldIncludes(command.command, term)) {
+    score = Math.max(score, 650);
+  }
+
+  for (const tag of command.tags ?? []) {
+    if (tag.toLocaleLowerCase() === term) {
+      score = Math.max(score, 600);
+      break;
+    }
+
+    if (fieldStartsWith(tag, term)) {
+      score = Math.max(score, 550);
+      break;
+    }
+
+    if (fieldIncludes(tag, term)) {
+      score = Math.max(score, 500);
+      break;
+    }
+  }
+
+  return score;
+}
+
 /**
  * Lightweight ranking tuned for predictable terminal search results.
  * Higher scores rank earlier; `null` means "no match".
  */
 export function scoreCommandForQuery(command: QuickCommand, query: string): number | null {
   const normalizedQuery: string = normalizeSearchQuery(query);
+  const queryTerms: string[] = splitNormalizedSearchQuery(normalizedQuery);
 
-  if (normalizedQuery.length === 0) {
+  if (queryTerms.length === 0) {
     return 0;
   }
 
   const haystack: string = buildSearchHaystack(command);
-  if (!haystack.includes(normalizedQuery)) {
-    return null;
+
+  if (queryTerms.length === 1) {
+    return scoreCommandForTerm(command, haystack, queryTerms[0]!);
   }
 
   let score: number = 0;
 
-  if (command.title.toLocaleLowerCase() === normalizedQuery) {
-    score = Math.max(score, 1_000);
-  } else if (fieldStartsWith(command.title, normalizedQuery)) {
-    score = Math.max(score, 900);
-  } else if (fieldHasWordPrefix(command.title, normalizedQuery)) {
-    score = Math.max(score, 850);
-  } else if (fieldIncludes(command.title, normalizedQuery)) {
-    score = Math.max(score, 800);
+  for (const queryTerm of queryTerms) {
+    const termScore: number | null = scoreCommandForTerm(command, haystack, queryTerm);
+    if (termScore === null) {
+      return null;
+    }
+
+    score += termScore;
   }
 
-  if (fieldStartsWith(command.command, normalizedQuery)) {
-    score = Math.max(score, 700);
-  } else if (fieldIncludes(command.command, normalizedQuery)) {
-    score = Math.max(score, 650);
-  }
-
-  for (const tag of command.tags ?? []) {
-    if (tag.toLocaleLowerCase() === normalizedQuery) {
-      score = Math.max(score, 600);
-      break;
-    }
-
-    if (fieldStartsWith(tag, normalizedQuery)) {
-      score = Math.max(score, 550);
-      break;
-    }
-
-    if (fieldIncludes(tag, normalizedQuery)) {
-      score = Math.max(score, 500);
-      break;
-    }
+  if (haystack.includes(normalizedQuery)) {
+    score += 100;
   }
 
   return score;

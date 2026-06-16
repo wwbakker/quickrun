@@ -29,6 +29,7 @@ bun run start
 
 Current controls:
 - type to filter commands
+- space-separated search terms are AND-matched, so `env easy` matches entries containing both terms in any order
 - `↑` / `↓` to move the selection
 - `Enter` to emit the selected command
 - `Backspace` to edit the query

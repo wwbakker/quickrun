@@ -11,19 +11,19 @@ export const quickrunExampleConfig: QuickrunConfig = defineQuickrunConfig({
     {
       title: "Start app dev server",
       command: "bun run dev",
-      when: ["~/projects/example-app", "~/projects/example-app/**"],
+      when: ["~/Repos/example-app", "~/Repos/example-app/**"],
       tags: ["frontend", "local"],
     },
     {
       title: "Run app tests",
       command: "bun test",
-      when: ["~/projects/example-app", "~/projects/example-app/**"],
+      when: ["~/Repos/example-app", "~/Repos/example-app/**"],
       tags: ["qa"],
     },
     {
       title: "Type-check TypeScript",
       command: "tsc --noEmit",
-      when: ["~/projects/**", "~/workspaces/**"],
+      when: ["~/Repos/**", "~/work/**"],
       tags: ["ts", "types"],
     },
   ]),

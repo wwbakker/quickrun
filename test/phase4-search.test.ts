@@ -28,6 +28,12 @@ const commands: QuickCommand[] = [
     when: "**",
     tags: ["deploy", "production"],
   },
+  {
+    title: "Start easy-bill env",
+    command: "docker compose up easy-bill",
+    when: "**",
+    tags: ["local"],
+  },
 ];
 
 describe("phase 4 search and ranking", () => {
@@ -41,6 +47,7 @@ describe("phase 4 search and ranking", () => {
       "Start app",
       "Run tests",
       "Build release",
+      "Start easy-bill env",
     ]);
   });
 
@@ -57,6 +64,14 @@ describe("phase 4 search and ranking", () => {
     expect(filterCommandsByQuery(commands, "checks").map((command: QuickCommand) => command.title)).toEqual([
       "Run tests",
     ]);
+  });
+
+  test("matches multiple query terms in any order", () => {
+    expect(filterCommandsByQuery(commands, "env easy").map((command: QuickCommand) => command.title)).toEqual([
+      "Start easy-bill env",
+    ]);
+
+    expect(scoreCommandForQuery(commands[4]!, "env easy")).toBeGreaterThan(0);
   });
 
   test("ranks stronger title matches above command and tag matches", () => {
